@@ -7,97 +7,58 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root {
-            --primary: #FFD93D;
-            --secondary: #6BCB77;
-            --accent: #FF6B6B;
-            --blue-3d: linear-gradient(145deg, #3498db, #2980b9);
-            --bg: #F0F7FF;
+            --primary: #FFD93D; --secondary: #6BCB77; --accent: #FF6B6B;
+            --blue-3d: linear-gradient(145deg, #3498db, #2980b9); --bg: #F0F7FF;
         }
 
-        body {
-            font-family: "Microsoft JhengHei", -apple-system, sans-serif;
-            background-color: var(--bg); margin: 0; padding: 0;
-            display: flex; flex-direction: column; align-items: center;
-        }
-
+        body { font-family: "Microsoft JhengHei", sans-serif; background-color: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; }
         header { background: var(--primary); width: 100%; padding: 10px 0; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .nav-buttons { margin: 10px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
         
-        button {
-            padding: 10px 18px; font-size: 1rem; border: none; border-radius: 25px;
-            cursor: pointer; transition: 0.2s; font-weight: bold;
-        }
-        .level-btn { background: white; border: 2px solid var(--secondary); color: #333; }
+        button { padding: 10px 18px; font-size: 1rem; border: none; border-radius: 25px; cursor: pointer; transition: 0.2s; font-weight: bold; }
+        .level-btn { background: white; border: 2px solid var(--secondary); }
         .active-level { background: var(--secondary); color: white; box-shadow: 0 4px 0px #4e9a56; }
 
-        .game-container {
-            width: 95%; max-width: 800px; background: white; padding: 20px;
-            border-radius: 25px; box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-            margin-bottom: 20px; box-sizing: border-box;
-        }
-
+        .game-container { width: 95%; max-width: 900px; background: white; padding: 20px; border-radius: 25px; box-shadow: 0 8px 30px rgba(0,0,0,0.08); margin-bottom: 20px; box-sizing: border-box; }
         .instruction { background: #E1F5FE; padding: 12px; border-radius: 12px; font-size: 0.9rem; color: #01579B; margin-bottom: 15px; border-left: 5px solid #03A9F4; }
 
-        /* Level 1: Shuffle & Sequence */
-        .box-title { font-weight: bold; color: #666; margin: 10px 0; font-size: 0.9rem; }
+        /* Level 1 */
         .grid-layout { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
         @media (min-width: 600px) { .grid-layout { grid-template-columns: repeat(4, 1fr); } }
+        .drop-zone { aspect-ratio: 1/1; border: 3px dashed #ccc; border-radius: 15px; position: relative; background: #fafafa; }
+        .drop-zone::before { content: attr(data-num); position: absolute; top: 5px; left: 8px; font-size: 1.2rem; font-weight: bold; color: #ddd; }
+        .img-card { width: 100%; height: 100%; border-radius: 12px; cursor: pointer; object-fit: cover; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .wrong-float { position: absolute; top: -5px; right: -5px; font-size: 35px; background: white; border-radius: 50%; display: none; z-index: 10; }
 
-        .drop-zone {
-            aspect-ratio: 1/1; border: 3px dashed #ccc; border-radius: 15px;
-            position: relative; background: #fafafa; display: flex; align-items: center; justify-content: center;
-        }
-        .drop-zone::before {
-            content: attr(data-num); position: absolute; top: 5px; left: 8px;
-            font-size: 1.2rem; font-weight: bold; color: #ddd;
-        }
-
-        .img-card {
-            width: 100%; height: 100%; border-radius: 12px; cursor: pointer;
-            object-fit: cover; transition: transform 0.2s; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .img-card:hover { transform: scale(1.02); }
-
-        .wrong-float {
-            position: absolute; top: -5px; right: -5px; font-size: 35px;
-            background: white; border-radius: 50%; line-height: 1; z-index: 10; display: none;
-        }
-
-        /* Level 2: Hint Hierarchy */
-        .hint-group { display: flex; flex-direction: column; gap: 10px; margin: 15px 0; }
-        .hint-btn-v3 {
-            display: flex; align-items: center; gap: 10px; padding: 12px;
-            border-radius: 15px; font-size: 1rem; border: 2px solid transparent; text-align: left;
-        }
+        /* Level 2 */
+        .audio-btn-3d { width: 70px; height: 70px; border-radius: 50%; background: var(--blue-3d); margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 0 #1c5980; cursor: pointer; border: none; color: white; font-size: 30px; }
+        .hint-btn-v3 { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 15px; font-size: 0.9rem; border: 2px solid transparent; width: 100%; margin-bottom: 8px; }
         .h-low { background: #E8F5E9; color: #2E7D32; border-color: #C8E6C9; }
         .h-mid { background: #FFF3E0; color: #EF6C00; border-color: #FFE0B2; }
         .h-high { background: #FFEBEE; color: #C62828; border-color: #FFCDD2; }
 
-        .audio-btn-3d {
-            width: 70px; height: 70px; border-radius: 50%; background: var(--blue-3d);
-            margin: 0 auto 15px; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 6px 0 #1c5980; cursor: pointer; border: none;
-        }
-        .audio-btn-3d span { font-size: 35px; color: white; display: block; margin-top: -2px; }
-
-        /* Level 3: Story Grammar Cards */
-        .big-img-container { position: relative; width: 100%; border-radius: 15px; border: 5px solid #eee; overflow: hidden; cursor: crosshair; }
-        .big-img-container img { width: 100%; display: block; }
-        .marker-star {
-            position: absolute; font-size: 45px; opacity: 0.5;
-            pointer-events: none; transform: translate(-50%, -50%); user-select: none;
-        }
-
-        .grammar-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; justify-content: center; }
-        .grammar-card {
-            width: 80px; height: 80px; position: relative; cursor: pointer;
-            border: 2px solid #eee; border-radius: 10px; overflow: hidden;
-        }
+        /* Level 3: Responsive Stacking */
+        .story-teller-wrapper { display: flex; flex-direction: column; gap: 20px; }
+        @media (min-width: 768px) { .story-teller-wrapper { flex-direction: row; align-items: flex-start; } .big-img-container { flex: 3; } .grammar-sidebar { flex: 1; display: flex; flex-direction: column; gap: 10px; } }
+        
+        .big-img-container { position: relative; width: 100%; border-radius: 15px; border: 4px solid #eee; overflow: hidden; }
+        .big-img-container img { width: 100%; display: block; pointer-events: none; }
+        .marker-star { position: absolute; font-size: 45px; opacity: 0.5; transform: translate(-50%, -50%); cursor: pointer; user-select: none; z-index: 20; }
+        
+        .grammar-grid-mobile { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 15px; }
+        @media (min-width: 768px) { .grammar-grid-mobile { display: none; } }
+        
+        .grammar-card { width: 70px; height: 70px; position: relative; border: 2px solid #eee; border-radius: 10px; background: white; cursor: pointer; }
         .grammar-card img { width: 100%; height: 100%; object-fit: contain; }
-        .grammar-card.checked::after {
-            content: '✔️'; position: absolute; inset: 0; background: rgba(107, 203, 119, 0.7);
-            display: flex; align-items: center; justify-content: center; font-size: 40px; color: white;
-        }
+        .grammar-card.checked::after { content: '✔️'; position: absolute; inset: 0; background: rgba(107, 203, 119, 0.7); display: flex; align-items: center; justify-content: center; font-size: 35px; color: white; }
+        .grammar-card.grey { filter: grayscale(1); opacity: 0.4; }
+
+        /* Results Page */
+        .result-row { display: flex; gap: 10px; padding: 10px; border-bottom: 1px solid #eee; align-items: center; }
+        .result-row img.thumb { width: 100px; border-radius: 8px; }
+        .recording-bar { background: #ff4757; color: white; padding: 15px; border-radius: 15px; text-align: center; margin-bottom: 15px; cursor: pointer; }
+        .recording-active { animation: pulse 1.5s infinite; background: #c0392b; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
 
         .hidden { display: none; }
     </style>
@@ -113,137 +74,119 @@
 </div>
 
 <div id="level1" class="game-container">
-    <div class="instruction">💡 <b>家長指南：</b>請點擊下方的隨機圖片，它們會按順序進入上方的空格。如果想更改位置，再次點擊空格內的圖片即可退回。</div>
-    
-    <div class="box-title">順序區 (Sequence Box)</div>
+    <div class="instruction">家長指南：請點擊下方的圖片。圖片會按點擊順序填入上方的空格中。如果想更改位置，再次點擊空格內的圖片即可退回。</div>
     <div class="grid-layout" id="sequence-box">
         <div class="drop-zone" data-num="1" id="q1"></div>
         <div class="drop-zone" data-num="2" id="q2"></div>
         <div class="drop-zone" data-num="3" id="q3"></div>
         <div class="drop-zone" data-num="4" id="q4"></div>
     </div>
-
-    <div class="box-title">待選區 (Shuffle Box)</div>
     <div class="grid-layout" id="shuffle-box"></div>
-
-    <div style="text-align:center; margin-top:20px;">
-        <button onclick="checkLevel1()" style="background:var(--accent); color:white; width: 150px;">完成 ✅</button>
-    </div>
+    <div style="text-align:center;"><button onclick="checkLevel1()" style="background:var(--accent); color:white;">完成 ✅</button></div>
 </div>
 
 <div id="level2" class="game-container hidden">
-    <div class="instruction">💡 <b>家長指南：</b>點擊藍色喇叭播放問題。如果孩子回答困難，請按順序提供「弱 -> 強」的提示。</div>
-    <button class="audio-btn-3d" onclick="speakQuestion()"><span>📢</span></button>
-    <h3 id="q-text" style="text-align:center; color:#2c3e50;"></h3>
-    
-    <div class="hint-group">
-        <button class="hint-btn-v3 h-low" onclick="toggleHint('full')"><span>💡</span> 1級提示：再次觀看完整故事 (最少提示)</button>
-        <button class="hint-btn-v3 h-mid" onclick="toggleHint('relevant')"><span>🔍</span> 2級提示：觀看最相關的圖片</button>
-        <button class="hint-btn-v3 h-high" onclick="toggleHint('circle')"><span>🎯</span> 3級提示：圈出最相關的細節 (最強提示)</button>
+    <div class="instruction">家長指南：點擊藍色喇叭播放問題，如孩子未能回答，可由上至下點擊提示。</div>
+    <button class="audio-btn-3d" onclick="speakQuestion()">📢</button>
+    <h3 id="q-text" style="text-align:center;"></h3>
+    <div style="max-width:400px; margin: 0 auto;">
+        <button class="hint-btn-v3 h-low" onclick="toggleHint('full')">💡 1級：再次觀看完整故事</button>
+        <button class="hint-btn-v3 h-mid" onclick="toggleHint('relevant')">🔍 2級：觀看最相關圖片</button>
+        <button class="hint-btn-v3 h-high" onclick="toggleHint('circle')">🎯 3級：圈出最相關細節</button>
     </div>
-
-    <div id="hint-display" class="hint-img-container" style="display:none; border:2px solid #ddd; border-radius:15px; padding:10px; margin-top:10px;"></div>
-    
-    <div style="text-align:center; margin-top:20px;">
-        <button onclick="nextQuestion()" style="background:var(--secondary); color:white;">答對了！下一題 ⭐</button>
-    </div>
+    <div id="hint-display" style="display:none; margin-top:15px; text-align:center; border:1px solid #ddd; padding:10px; border-radius:15px;"></div>
+    <div style="text-align:center; margin-top:20px;"><button onclick="nextQuestion()" style="background:var(--secondary); color:white;">下一題 ⭐</button></div>
 </div>
 
 <div id="level3" class="game-container hidden">
-    <div class="instruction">💡 <b>家長指南：</b>引導孩子描述圖片。點擊圖片可放置半透明星號引導視覺注意（雙擊星號刪除）。講完對應元素後請點擊下方的圖標打勾。</div>
-    <div class="big-img-container" id="canvas-3" onclick="placeStar(event)">
-        <img id="teller-img" src="Story1-1.png">
+    <div id="teller-main">
+        <div class="instruction">家長指南：家長可點擊紅按鈕開始全程錄音。引導孩子說故事，點擊圖片可放置星號引導視覺注意（雙擊星號刪除），說完對應元素後請點擊下方的圖標打勾。</div>
+        <div id="rec-status" class="recording-bar" onclick="toggleGlobalRecord()">⏺️ 開始全程錄音</div>
+        
+        <div class="story-teller-wrapper">
+            <div class="big-img-container" id="canvas-3" onclick="placeStar(event)">
+                <img id="teller-img" src="">
+            </div>
+            <div class="grammar-sidebar" id="grammar-sidebar"></div>
+        </div>
+        <div class="grammar-grid-mobile" id="grammar-mobile"></div>
+        
+        <button onclick="tellerNext()" style="width:100%; background:var(--primary); margin-top:20px;">下一頁 ➡️</button>
     </div>
-    <div class="grammar-grid" id="grammar-icons"></div>
-    <button onclick="tellerNext()" style="width:100%; background:var(--primary); margin-top:20px; font-size:1.2rem;">下一頁 ➡️</button>
+
+    <div id="teller-result" class="hidden">
+        <h3>講故事總結</h3>
+        <button id="play-full-rec" onclick="playGlobalRecord()" style="background:var(--blue-3d); color:white; width:100%; margin-bottom:20px;">▶️ 聽返小朋友講嘅故事</button>
+        <div id="summary-list"></div>
+        <button onclick="showLevel(1)" style="width:100%; margin-top:20px; background:#eee;">返回第一關</button>
+    </div>
 </div>
 
 <script>
-    const storyImgs = ['Story1-1.png', 'Story1-2.png', 'Story1-3.png', 'Story1-4.png'];
+    const storyImgs = ['Story1-1.jpg', 'Story1-2.jpg', 'Story1-3.jpg', 'Story1-4.jpg'];
     let currentSeq = [null, null, null, null];
+    let grammarStatus = [[], [], [], []]; // Tracks which icons were ticked per page
 
-    // --- Level 1 Logic ---
+    // --- Level 1 ---
     function initLevel1() {
         const sBox = document.getElementById('shuffle-box');
-        sBox.innerHTML = '';
-        currentSeq = [null, null, null, null];
+        sBox.innerHTML = ''; currentSeq = [null, null, null, null];
         renderSequence();
-
-        const shuffled = [...storyImgs].sort(() => Math.random() - 0.5);
-        shuffled.forEach(src => {
+        [...storyImgs].sort(()=>Math.random()-0.5).forEach((src, idx) => {
             const img = document.createElement('img');
-            img.src = src;
-            img.className = 'img-card';
-            img.onclick = () => moveToSequence(src, img);
+            img.src = src; img.className = 'img-card'; img.id = 'shuf-'+idx;
+            img.onclick = () => {
+                const emptyIdx = currentSeq.indexOf(null);
+                if(emptyIdx !== -1) {
+                    currentSeq[emptyIdx] = src;
+                    img.style.visibility = 'hidden'; // Keep position
+                    renderSequence();
+                }
+            };
             sBox.appendChild(img);
         });
     }
 
-    function moveToSequence(src, el) {
-        const emptyIdx = currentSeq.indexOf(null);
-        if (emptyIdx !== -1) {
-            currentSeq[emptyIdx] = src;
-            el.style.display = 'none';
-            renderSequence();
-        }
-    }
-
     function renderSequence() {
-        for (let i = 0; i < 4; i++) {
-            const zone = document.getElementById('q' + (i+1));
+        for(let i=0; i<4; i++) {
+            const zone = document.getElementById('q'+(i+1));
             zone.innerHTML = '';
-            if (currentSeq[i]) {
+            if(currentSeq[i]) {
                 const img = document.createElement('img');
-                img.src = currentSeq[i];
-                img.className = 'img-card';
-                img.onclick = () => removeFromSequence(i);
-                const wrong = document.createElement('div');
-                wrong.className = 'wrong-float';
-                wrong.innerText = '❓';
-                zone.appendChild(img);
-                zone.appendChild(wrong);
+                img.src = currentSeq[i]; img.className = 'img-card';
+                img.onclick = () => {
+                    const src = currentSeq[i];
+                    currentSeq[i] = null;
+                    document.querySelectorAll('#shuffle-box img').forEach(sImg => {
+                        if(sImg.src.includes(src)) sImg.style.visibility = 'visible';
+                    });
+                    renderSequence();
+                };
+                const wrong = document.createElement('div'); wrong.className = 'wrong-float'; wrong.innerText = '❓';
+                zone.appendChild(img); zone.appendChild(wrong);
             }
         }
-    }
-
-    function removeFromSequence(idx) {
-        const src = currentSeq[idx];
-        currentSeq[idx] = null;
-        // 顯示回 Shuffle Box
-        const shuffledImgs = document.querySelectorAll('#shuffle-box img');
-        shuffledImgs.forEach(img => {
-            if (img.src.includes(src)) img.style.display = 'block';
-        });
-        renderSequence();
     }
 
     function checkLevel1() {
         let allCorrect = true;
         currentSeq.forEach((src, i) => {
-            const zone = document.getElementById('q' + (i+1));
-            const mark = zone.querySelector('.wrong-float');
-            if (src !== storyImgs[i]) {
-                if(mark) mark.style.display = 'block';
-                allCorrect = false;
-            } else {
-                if(mark) mark.style.display = 'none';
-            }
+            const mark = document.getElementById('q'+(i+1)).querySelector('.wrong-float');
+            if(src !== storyImgs[i]) { if(mark) mark.style.display='block'; allCorrect=false; }
+            else { if(mark) mark.style.display='none'; }
         });
-        if (allCorrect && !currentSeq.includes(null)) {
-            confetti();
-            setTimeout(() => alert("你好俾心機排次序呀！🎉"), 500);
-        }
+        if(allCorrect && !currentSeq.includes(null)) confetti();
     }
 
-    // --- Level 2 Logic ---
+    // --- Level 2 ---
     let qIdx = 0;
     const questions = [
-        { q: "一開始，邊個玩積木？", rel: "Story1-1.png", hint: "story1-q1-hint.png" },
-        { q: "男仔喺邊度玩積木?", rel: "Story1-1.png", hint: "story1-q2-hint.png" },
-        { q: "女仔想同男仔一齊做咩呀？", rel: "Story1-2.png", hint: "story1-q3-hint.png" },
-        { q: "男仔有無同個女仔分享？", rel: "Story1-3.png", hint: "story1-q4-hint.png" },
-        { q: "點解老師會俾手指公佢哋？", rel: "Story1-4.png", hint: "story1-q5-hint.png" },
-        { q: "玩完積木之後，佢哋應該要做咩呀？", rel: "Story1-4.png", hint: "story1-q6-hint.png" }
+        { q: "1. 一開始，邊個玩積木？", rel: "Story1-1.jpg", hint: "story1-q1-hint.png" },
+        { q: "2. 男仔喺邊度玩積木?", rel: "Story1-1.jpg", hint: "story1-q2-hint.png" },
+        { q: "3. 女仔想同男仔一齊做咩呀？", rel: "Story1-2.jpg", hint: "story1-q3-hint.png" },
+        { q: "4. 男仔有無同個女仔分享？", rel: "Story1-3.jpg", hint: "story1-q4-hint.png" },
+        { q: "5. 點解老師會俾手指公佢哋？", rel: "Story1-4.jpg", hint: "story1-q5-hint.png" },
+        { q: "6. 玩完積木之後，佢哋應該要做咩呀？", rel: "Story1-4.jpg", hint: "story1-q6-hint.png" }
     ];
 
     function updateQuiz() {
@@ -253,34 +196,26 @@
     }
 
     function speakQuestion() {
-        const msg = new SpeechSynthesisUtterance(questions[qIdx].q);
-        msg.lang = 'zh-HK';
-        msg.rate = 0.85;
-        window.speechSynthesis.speak(msg);
+        const msg = new SpeechSynthesisUtterance(questions[qIdx].q.split('. ')[1]);
+        msg.lang = 'zh-HK'; speechSynthesis.speak(msg);
     }
 
     function toggleHint(type) {
         const div = document.getElementById('hint-display');
-        if (div.style.display === 'block') { div.style.display = 'none'; return; }
-        div.style.display = 'block';
-        div.innerHTML = '';
-        if (type === 'full') {
-            storyImgs.forEach(s => div.innerHTML += `<img src="${s}" style="width:48%; margin:1%;">`);
-        } else if (type === 'relevant') {
-            div.innerHTML = `<img src="${questions[qIdx].rel}" style="width:100%;">`;
-        } else {
-            div.innerHTML = `<img src="${questions[qIdx].hint}" style="width:100%;">`;
-        }
+        div.style.display = 'block'; div.innerHTML = '';
+        if(type==='full') storyImgs.forEach(s => div.innerHTML += `<img src="${s}" style="width:45%; margin:2px">`);
+        else if(type==='relevant') div.innerHTML = `<img src="${questions[qIdx].rel}" style="width:90%">`;
+        else div.innerHTML = `<img src="${questions[qIdx].hint}" style="width:90%">`;
     }
 
     function nextQuestion() {
-        qIdx = (qIdx + 1) % questions.length;
-        updateQuiz();
+        if(qIdx < 5) { qIdx++; updateQuiz(); }
+        else { confetti(); }
     }
 
-    // --- Level 3 Logic ---
+    // --- Level 3 ---
     let tIdx = 0;
-    const grammars = [
+    const grammarConfig = [
         ['when.png', 'who.png', 'where.png', 'what.png'],
         ['initiating-event.png'],
         ['attempt.png'],
@@ -288,73 +223,101 @@
     ];
 
     function initLevel3() {
-        tIdx = 0;
+        tIdx = 0; grammarStatus = [[],[],[],[]];
+        document.getElementById('teller-main').classList.remove('hidden');
+        document.getElementById('teller-result').classList.add('hidden');
         renderTeller();
     }
 
     function renderTeller() {
         document.getElementById('teller-img').src = storyImgs[tIdx];
-        const gBox = document.getElementById('grammar-icons');
-        gBox.innerHTML = '';
-        grammars[tIdx].forEach(icon => {
-            const d = document.createElement('div');
-            d.className = 'grammar-card';
-            d.innerHTML = `<img src="${icon}">`;
-            d.onclick = () => d.classList.toggle('checked');
-            gBox.appendChild(d);
+        const side = document.getElementById('grammar-sidebar');
+        const mob = document.getElementById('grammar-mobile');
+        side.innerHTML = ''; mob.innerHTML = '';
+        
+        grammarConfig[tIdx].forEach(icon => {
+            const card = createGrammarCard(icon);
+            side.appendChild(card.cloneNode(true));
+            mob.appendChild(card);
         });
         document.querySelectorAll('.marker-star').forEach(s => s.remove());
+    }
+
+    function createGrammarCard(icon) {
+        const d = document.createElement('div');
+        d.className = 'grammar-card';
+        if(grammarStatus[tIdx].includes(icon)) d.classList.add('checked');
+        d.innerHTML = `<img src="${icon}">`;
+        d.onclick = () => {
+            d.classList.toggle('checked');
+            if(d.classList.contains('checked')) grammarStatus[tIdx].push(icon);
+            else grammarStatus[tIdx] = grammarStatus[tIdx].filter(i => i !== icon);
+            // Sync side/mobile
+            document.querySelectorAll(`.grammar-card img[src="${icon}"]`).forEach(img => img.parentElement.classList.toggle('checked', d.classList.contains('checked')));
+        };
+        return d;
     }
 
     function placeStar(e) {
         const rect = e.currentTarget.getBoundingClientRect();
         const x = ((e.clientX - rect.left) / rect.width) * 100;
         const y = ((e.clientY - rect.top) / rect.height) * 100;
-        
         const star = document.createElement('div');
-        star.className = 'marker-star';
-        star.innerText = '⭐';
-        star.style.left = x + '%';
-        star.style.top = y + '%';
-        star.style.pointerEvents = 'auto';
-
-        // 雙擊刪除邏輯
-        star.addEventListener('dblclick', (ev) => {
-            ev.stopPropagation();
-            star.remove();
-        });
-        
-        // 移動端長按或連點模擬
-        let lastTap = 0;
-        star.addEventListener('touchstart', (ev) => {
-            const now = Date.now();
-            if (now - lastTap < 300) { star.remove(); }
-            lastTap = now;
-        });
-
+        star.className = 'marker-star'; star.innerText = '⭐';
+        star.style.left = x + '%'; star.style.top = y + '%';
+        star.addEventListener('dblclick', (ev) => { ev.stopPropagation(); star.remove(); });
         e.currentTarget.appendChild(star);
     }
 
     function tellerNext() {
-        if (tIdx < 3) {
-            tIdx++; renderTeller();
-        } else {
-            confetti();
-            alert("你好俾心機講故事呀！");
-            showLevel(1);
+        if(tIdx < 3) { tIdx++; renderTeller(); }
+        else { 
+            if(mediaRecorder && mediaRecorder.state === "recording") toggleGlobalRecord();
+            confetti(); showResultPage(); 
         }
+    }
+
+    function showResultPage() {
+        document.getElementById('teller-main').classList.add('hidden');
+        document.getElementById('teller-result').classList.remove('hidden');
+        const list = document.getElementById('summary-list'); list.innerHTML = '';
+        storyImgs.forEach((src, i) => {
+            let iconsHtml = grammarConfig[i].map(icon => {
+                const isChecked = grammarStatus[i].includes(icon);
+                return `<div class="grammar-card ${isChecked?'':'grey'}"><img src="${icon}"></div>`;
+            }).join('');
+            list.innerHTML += `<div class="result-row"><img src="${src}" class="thumb"><div>${iconsHtml}</div></div>`;
+        });
+    }
+
+    // --- Global Recording Logic ---
+    let mediaRecorder; let audioChunks = []; let fullAudioBlob;
+    async function toggleGlobalRecord() {
+        const btn = document.getElementById('rec-status');
+        if(!mediaRecorder || mediaRecorder.state === "inactive") {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder.onstop = () => { fullAudioBlob = new Blob(audioChunks, { type: 'audio/wav' }); };
+            mediaRecorder.start();
+            btn.innerText = "⏹️ 停止錄音"; btn.classList.add('recording-active');
+        } else {
+            mediaRecorder.stop();
+            btn.innerText = "✅ 錄音已完成"; btn.classList.remove('recording-active');
+        }
+    }
+
+    function playGlobalRecord() {
+        if(fullAudioBlob) { const audio = new Audio(URL.createObjectURL(fullAudioBlob)); audio.play(); }
     }
 
     function showLevel(lvl) {
         document.querySelectorAll('.game-container').forEach(el => el.classList.add('hidden'));
-        document.querySelectorAll('.level-btn').forEach(btn => btn.classList.remove('active-level'));
-        document.getElementById('level' + lvl).classList.remove('hidden');
-        document.querySelectorAll('.level-btn')[lvl-1].classList.add('active-level');
-        if(lvl === 1) initLevel1();
-        if(lvl === 2) updateQuiz();
-        if(lvl === 3) initLevel3();
+        document.getElementById('level'+lvl).classList.remove('hidden');
+        document.querySelectorAll('.level-btn').forEach((b,i)=>b.classList.toggle('active-level', i===lvl-1));
+        if(lvl===1) initLevel1(); if(lvl===2) updateQuiz(); if(lvl===3) initLevel3();
     }
-
     window.onload = () => initLevel1();
 </script>
 </body>
