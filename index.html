@@ -41,10 +41,7 @@
             margin-bottom: 30px; position: relative; min-height: 400px;
         }
 
-        /* Level 1: Sequencing */
-        .card-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 10px;
-        }
+        .card-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 10px; }
         .story-card {
             position: relative; width: 100%; aspect-ratio: 1/1; 
             border: 4px solid #eee; border-radius: 15px; cursor: move; background: #fff;
@@ -60,12 +57,10 @@
             background: var(--accent); color: white; padding: 15px 30px; font-size: 1.2rem;
         }
 
-        /* Level 2: Quiz (Previous logic) */
         .question-box { display: flex; align-items: center; gap: 10px; background: #FFF9E6; padding: 15px; border-radius: 20px; margin-bottom: 15px; }
         .hint-overlay { position: relative; width: 100%; }
         .red-circle { position: absolute; border: 6px solid red; border-radius: 50%; pointer-events: none; display: none; animation: pulse 1s infinite; }
 
-        /* Level 3: Recording */
         .story-row { border-bottom: 2px dashed #ddd; padding: 15px 0; display: flex; flex-direction: column; align-items: center; gap: 10px; }
         .record-controls { display: flex; gap: 10px; }
         .btn-record { background: #ff4757; color: white; }
@@ -82,15 +77,15 @@
 <header><h1>🎒 故事小錦囊</h1></header>
 
 <div class="nav-buttons">
-    <button class="level-btn active-level" onclick="showLevel(1)">1. 排排次序</button>
-    <button class="level-btn" onclick="showLevel(2)">2. 聽圖答問題</button>
+    <button class="level-btn active-level" onclick="showLevel(1)">1. 排列次序</button>
+    <button class="level-btn" onclick="showLevel(2)">2. 故事理解</button>
     <button class="level-btn" onclick="showLevel(3)">3. 我識講故事</button>
 </div>
 
 <div id="level1" class="game-container">
     <h3>請拖動圖片放回正確順序 (1-4)</h3>
     <div class="card-grid" id="sortable-grid"></div>
-    <button class="finish-btn" onclick="checkOrder()">原成 ✅</button>
+    <button class="finish-btn" onclick="checkOrder()">完成 ✅</button>
 </div>
 
 <div id="level2" class="game-container hidden">
@@ -99,7 +94,7 @@
         <h3 id="question-text" style="margin:0;">載入中...</h3>
     </div>
     <div class="hint-overlay">
-        <img id="quiz-img" src="" style="width:100%; border-radius:20px;">
+        <img id="quiz-img" src="Story1-1.png" style="width:100%; border-radius:20px;">
         <div id="red-circle" class="red-circle"></div>
     </div>
     <div class="nav-buttons" style="margin-top:20px;">
@@ -114,10 +109,19 @@
 </div>
 
 <script>
-    const storyImgs = ['Story1-1.jpg', 'Story1-2.jpg', 'Story1-3.jpg', 'Story1-4.jpg'];
-    let currentLvl = 1;
+    // 更新為 .png 擴展名
+    const storyImgs = ['Story1-1.png', 'Story1-2.png', 'Story1-3.png', 'Story1-4.png'];
+    let currentQuizIdx = 0;
 
-    // --- 通用功能 ---
+    const quizData = [
+        { q: "一開始，邊個玩積木？", img: "Story1-1.png", c: {t:'35%', l:'35%', w:'35%', h:'40%'} },
+        { q: "男仔喺邊度玩積木?", img: "Story1-1.png", c: {t:'5%', l:'5%', w:'90%', h:'30%'} },
+        { q: "女仔想同男仔一齊做咩呀？", img: "Story1-2.png", c: {t:'65%', l:'20%', w:'60%', h:'30%'} },
+        { q: "男仔有無同個女仔分享？", img: "Story1-3.png", c: {t:'50%', l:'40%', w:'30%', h:'30%'} },
+        { q: "點解老師會俾手指公佢哋？", img: "Story1-4.png", c: {t:'20%', l:'20%', w:'60%', h:'50%'} },
+        { q: "玩完積木之後，佢哋應該要做咩呀？", img: "Story1-4.png", c: {t:'25%', l:'5%', w:'30%', h:'40%'} }
+    ];
+
     function showLevel(lvl) {
         document.querySelectorAll('.game-container').forEach(el => el.classList.add('hidden'));
         document.querySelectorAll('.level-btn').forEach(btn => btn.classList.remove('active-level'));
@@ -128,31 +132,23 @@
         if(lvl === 3) initLevel3();
     }
 
-    // --- Level 1: Sequencing ---
     function initLevel1() {
         const grid = document.getElementById('sortable-grid');
         grid.innerHTML = '';
-        // 隨機打亂
         const shuffled = [...storyImgs].sort(() => Math.random() - 0.5);
         shuffled.forEach((src, idx) => {
             const div = document.createElement('div');
             div.className = 'story-card';
             div.draggable = true;
-            div.dataset.correctSrc = src;
             div.innerHTML = `<img src="${src}"><div class="wrong-mark">❓</div>`;
-            
-            // 拖放邏輯 (支援桌面與基本觸控)
             div.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', idx); });
             div.addEventListener('dragover', e => e.preventDefault());
             div.addEventListener('drop', e => {
                 const draggedIdx = e.dataTransfer.getData('text/plain');
                 const cards = Array.from(grid.children);
-                const draggedCard = cards[draggedIdx];
-                const targetCard = cards[idx];
-                // 交換圖片內容
-                const tempSrc = draggedCard.querySelector('img').src;
-                draggedCard.querySelector('img').src = targetCard.querySelector('img').src;
-                targetCard.querySelector('img').src = tempSrc;
+                const tempSrc = cards[draggedIdx].querySelector('img').src;
+                cards[draggedIdx].querySelector('img').src = cards[idx].querySelector('img').src;
+                cards[idx].querySelector('img').src = tempSrc;
             });
             grid.appendChild(div);
         });
@@ -162,7 +158,7 @@
         const cards = document.querySelectorAll('#sortable-grid .story-card');
         let allCorrect = true;
         cards.forEach((card, i) => {
-            const currentImgSrc = card.querySelector('img').src.split('/').pop();
+            const currentImgSrc = decodeURIComponent(card.querySelector('img').src.split('/').pop());
             const correctImgSrc = storyImgs[i];
             const mark = card.querySelector('.wrong-mark');
             if (currentImgSrc !== correctImgSrc) {
@@ -172,23 +168,11 @@
                 mark.style.visibility = 'hidden';
             }
         });
-
         if (allCorrect) {
             confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-            setTimeout(() => alert("好叻呀！全部排啱晒！🎉"), 500);
+            setTimeout(() => alert("你好俾心機排次序呀！🎉"), 500);
         }
     }
-
-    // --- Level 2: Quiz (繼承之前邏輯) ---
-    let currentQuizIdx = 0;
-    const quizData = [
-        { q: "一開始，邊個玩積木？", img: "Story1-1.jpg", c: {t:'35%', l:'35%', w:'35%', h:'40%'} },
-        { q: "男仔喺邊度玩積木?", img: "Story1-1.jpg", c: {t:'5%', l:'5%', w:'90%', h:'30%'} },
-        { q: "女仔想同男仔一齊做咩呀？", img: "Story1-2.jpg", c: {t:'65%', l:'20%', w:'60%', h:'30%'} },
-        { q: "男仔有無同個女仔分享？", img: "Story1-3.jpg", c: {t:'50%', l:'40%', w:'30%', h:'30%'} },
-        { q: "點解老師會俾手指公佢哋？", img: "Story1-4.jpg", c: {t:'20%', l:'20%', w:'60%', h:'50%'} },
-        { q: "玩完積木之後，佢哋應該要做咩呀？", img: "Story1-4.jpg", c: {t:'25%', l:'5%', w:'30%', h:'40%'} }
-    ];
 
     function updateQuiz() {
         const data = quizData[currentQuizIdx];
@@ -218,9 +202,7 @@
         updateQuiz();
     }
 
-    // --- Level 3: Recording ---
     let mediaRecorder;
-    let audioChunks = [];
     let audioBlobs = {};
 
     function initLevel3() {
@@ -234,8 +216,7 @@
                 <div class="record-controls">
                     <button class="btn-record" id="rec-${i}" onclick="toggleRecord(${i})">⏺️ 錄音</button>
                     <button class="btn-play" id="play-${i}" onclick="playAudio(${i})" disabled>▶️ 聽返</button>
-                </div>
-            `;
+                </div>`;
             list.appendChild(row);
         });
     }
@@ -245,14 +226,12 @@
         if (!mediaRecorder || mediaRecorder.state === "inactive") {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
-            
-            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            let chunks = [];
+            mediaRecorder.ondataavailable = e => chunks.push(e.data);
             mediaRecorder.onstop = () => {
-                audioBlobs[id] = new Blob(audioChunks, { type: 'audio/wav' });
+                audioBlobs[id] = new Blob(chunks, { type: 'audio/wav' });
                 document.getElementById(`play-${id}`).disabled = false;
             };
-
             mediaRecorder.start();
             btn.innerText = "⏹️ 停止";
             btn.classList.add('recording-active');
@@ -264,14 +243,11 @@
     }
 
     function playAudio(id) {
-        const audioUrl = URL.createObjectURL(audioBlobs[id]);
-        const audio = new Audio(audioUrl);
+        const audio = new Audio(URL.createObjectURL(audioBlobs[id]));
         audio.play();
     }
 
-    // 初始化第一關
     window.onload = () => initLevel1();
 </script>
-
 </body>
 </html>
