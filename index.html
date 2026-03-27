@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互動故事-在課室分享積木</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary: #FFD93D;
+            --secondary: #6BCB77;
+            --accent: #FF6B6B;
+            --bg: #F0F7FF;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', "Microsoft JhengHei", sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #333;
+            touch-action: manipulation;
+        }
+
+        header { background: var(--primary); width: 100%; padding: 15px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .nav-buttons { margin: 15px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        
+        button {
+            padding: 12px 20px; font-size: 1rem; border: none; border-radius: 50px;
+            cursor: pointer; transition: 0.2s; font-weight: bold; box-shadow: 0 4px 0px #ddd;
+        }
+        button:active { transform: translateY(3px); box-shadow: none; }
+        .level-btn { background: white; border: 2px solid var(--secondary); }
+        .active-level { background: var(--secondary); color: white; }
+
+        .game-container {
+            width: 90%; max-width: 600px; background: white; padding: 20px;
+            border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            margin-bottom: 30px; position: relative; min-height: 400px;
+        }
+
+        /* Level 1: Sequencing */
+        .card-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 10px;
+        }
+        .story-card {
+            position: relative; width: 100%; aspect-ratio: 1/1; 
+            border: 4px solid #eee; border-radius: 15px; cursor: move; background: #fff;
+        }
+        .story-card img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+        .wrong-mark {
+            position: absolute; top: 10px; right: 10px; font-size: 40px;
+            background: rgba(255,255,255,0.8); border-radius: 50%; width: 50px; height: 50px;
+            display: flex; align-items: center; justify-content: center; visibility: hidden;
+        }
+        .finish-btn {
+            position: absolute; bottom: -20px; right: 10px;
+            background: var(--accent); color: white; padding: 15px 30px; font-size: 1.2rem;
+        }
+
+        /* Level 2: Quiz (Previous logic) */
+        .question-box { display: flex; align-items: center; gap: 10px; background: #FFF9E6; padding: 15px; border-radius: 20px; margin-bottom: 15px; }
+        .hint-overlay { position: relative; width: 100%; }
+        .red-circle { position: absolute; border: 6px solid red; border-radius: 50%; pointer-events: none; display: none; animation: pulse 1s infinite; }
+
+        /* Level 3: Recording */
+        .story-row { border-bottom: 2px dashed #ddd; padding: 15px 0; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .record-controls { display: flex; gap: 10px; }
+        .btn-record { background: #ff4757; color: white; }
+        .btn-play { background: #1e90ff; color: white; }
+        .recording-active { animation: blink 1s infinite; background: #ff0000 !important; }
+
+        @keyframes blink { 50% { opacity: 0.5; } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<header><h1>🎒 故事小錦囊</h1></header>
+
+<div class="nav-buttons">
+    <button class="level-btn active-level" onclick="showLevel(1)">1. 排排次序</button>
+    <button class="level-btn" onclick="showLevel(2)">2. 聽圖答問題</button>
+    <button class="level-btn" onclick="showLevel(3)">3. 我識講故事</button>
+</div>
+
+<div id="level1" class="game-container">
+    <h3>請拖動圖片放回正確順序 (1-4)</h3>
+    <div class="card-grid" id="sortable-grid"></div>
+    <button class="finish-btn" onclick="checkOrder()">原成 ✅</button>
+</div>
+
+<div id="level2" class="game-container hidden">
+    <div class="question-box">
+        <button onclick="speakQuestion()" style="background:#FF9F43; color:white; border-radius:50%; width:45px; height:45px;">📢</button>
+        <h3 id="question-text" style="margin:0;">載入中...</h3>
+    </div>
+    <div class="hint-overlay">
+        <img id="quiz-img" src="" style="width:100%; border-radius:20px;">
+        <div id="red-circle" class="red-circle"></div>
+    </div>
+    <div class="nav-buttons" style="margin-top:20px;">
+        <button onclick="toggleCircle()" style="background:#FFEAA7;">🔴 提示圈圈</button>
+        <button onclick="nextQuestion()" style="background:var(--secondary); color:white;">下一題 ⭐</button>
+    </div>
+</div>
+
+<div id="level3" class="game-container hidden">
+    <h3>望住圖畫錄低你講嘅故事：</h3>
+    <div id="recording-list"></div>
+</div>
+
+<script>
+    const storyImgs = ['Story1-1.jpg', 'Story1-2.jpg', 'Story1-3.jpg', 'Story1-4.jpg'];
+    let currentLvl = 1;
+
+    // --- 通用功能 ---
+    function showLevel(lvl) {
+        document.querySelectorAll('.game-container').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.level-btn').forEach(btn => btn.classList.remove('active-level'));
+        document.getElementById('level' + lvl).classList.remove('hidden');
+        event.currentTarget.classList.add('active-level');
+        if(lvl === 1) initLevel1();
+        if(lvl === 2) updateQuiz();
+        if(lvl === 3) initLevel3();
+    }
+
+    // --- Level 1: Sequencing ---
+    function initLevel1() {
+        const grid = document.getElementById('sortable-grid');
+        grid.innerHTML = '';
+        // 隨機打亂
+        const shuffled = [...storyImgs].sort(() => Math.random() - 0.5);
+        shuffled.forEach((src, idx) => {
+            const div = document.createElement('div');
+            div.className = 'story-card';
+            div.draggable = true;
+            div.dataset.correctSrc = src;
+            div.innerHTML = `<img src="${src}"><div class="wrong-mark">❓</div>`;
+            
+            // 拖放邏輯 (支援桌面與基本觸控)
+            div.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', idx); });
+            div.addEventListener('dragover', e => e.preventDefault());
+            div.addEventListener('drop', e => {
+                const draggedIdx = e.dataTransfer.getData('text/plain');
+                const cards = Array.from(grid.children);
+                const draggedCard = cards[draggedIdx];
+                const targetCard = cards[idx];
+                // 交換圖片內容
+                const tempSrc = draggedCard.querySelector('img').src;
+                draggedCard.querySelector('img').src = targetCard.querySelector('img').src;
+                targetCard.querySelector('img').src = tempSrc;
+            });
+            grid.appendChild(div);
+        });
+    }
+
+    function checkOrder() {
+        const cards = document.querySelectorAll('#sortable-grid .story-card');
+        let allCorrect = true;
+        cards.forEach((card, i) => {
+            const currentImgSrc = card.querySelector('img').src.split('/').pop();
+            const correctImgSrc = storyImgs[i];
+            const mark = card.querySelector('.wrong-mark');
+            if (currentImgSrc !== correctImgSrc) {
+                mark.style.visibility = 'visible';
+                allCorrect = false;
+            } else {
+                mark.style.visibility = 'hidden';
+            }
+        });
+
+        if (allCorrect) {
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            setTimeout(() => alert("好叻呀！全部排啱晒！🎉"), 500);
+        }
+    }
+
+    // --- Level 2: Quiz (繼承之前邏輯) ---
+    let currentQuizIdx = 0;
+    const quizData = [
+        { q: "一開始，邊個玩積木？", img: "Story1-1.jpg", c: {t:'35%', l:'35%', w:'35%', h:'40%'} },
+        { q: "男仔喺邊度玩積木?", img: "Story1-1.jpg", c: {t:'5%', l:'5%', w:'90%', h:'30%'} },
+        { q: "女仔想同男仔一齊做咩呀？", img: "Story1-2.jpg", c: {t:'65%', l:'20%', w:'60%', h:'30%'} },
+        { q: "男仔有無同個女仔分享？", img: "Story1-3.jpg", c: {t:'50%', l:'40%', w:'30%', h:'30%'} },
+        { q: "點解老師會俾手指公佢哋？", img: "Story1-4.jpg", c: {t:'20%', l:'20%', w:'60%', h:'50%'} },
+        { q: "玩完積木之後，佢哋應該要做咩呀？", img: "Story1-4.jpg", c: {t:'25%', l:'5%', w:'30%', h:'40%'} }
+    ];
+
+    function updateQuiz() {
+        const data = quizData[currentQuizIdx];
+        document.getElementById('question-text').innerText = data.q;
+        document.getElementById('quiz-img').src = data.img;
+        document.getElementById('red-circle').style.display = 'none';
+        speakQuestion();
+    }
+
+    function speakQuestion() {
+        const msg = new SpeechSynthesisUtterance(quizData[currentQuizIdx].q);
+        msg.lang = 'zh-HK';
+        msg.rate = 0.9;
+        window.speechSynthesis.speak(msg);
+    }
+
+    function toggleCircle() {
+        const circle = document.getElementById('red-circle');
+        const pos = quizData[currentQuizIdx].c;
+        circle.style.top = pos.t; circle.style.left = pos.l;
+        circle.style.width = pos.w; circle.style.height = pos.h;
+        circle.style.display = circle.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function nextQuestion() {
+        currentQuizIdx = (currentQuizIdx + 1) % quizData.length;
+        updateQuiz();
+    }
+
+    // --- Level 3: Recording ---
+    let mediaRecorder;
+    let audioChunks = [];
+    let audioBlobs = {};
+
+    function initLevel3() {
+        const list = document.getElementById('recording-list');
+        list.innerHTML = '';
+        storyImgs.forEach((src, i) => {
+            const row = document.createElement('div');
+            row.className = 'story-row';
+            row.innerHTML = `
+                <img src="${src}" style="width:150px; border-radius:10px;">
+                <div class="record-controls">
+                    <button class="btn-record" id="rec-${i}" onclick="toggleRecord(${i})">⏺️ 錄音</button>
+                    <button class="btn-play" id="play-${i}" onclick="playAudio(${i})" disabled>▶️ 聽返</button>
+                </div>
+            `;
+            list.appendChild(row);
+        });
+    }
+
+    async function toggleRecord(id) {
+        const btn = document.getElementById(`rec-${id}`);
+        if (!mediaRecorder || mediaRecorder.state === "inactive") {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                audioBlobs[id] = new Blob(audioChunks, { type: 'audio/wav' });
+                document.getElementById(`play-${id}`).disabled = false;
+            };
+
+            mediaRecorder.start();
+            btn.innerText = "⏹️ 停止";
+            btn.classList.add('recording-active');
+        } else {
+            mediaRecorder.stop();
+            btn.innerText = "⏺️ 錄音";
+            btn.classList.remove('recording-active');
+        }
+    }
+
+    function playAudio(id) {
+        const audioUrl = URL.createObjectURL(audioBlobs[id]);
+        const audio = new Audio(audioUrl);
+        audio.play();
+    }
+
+    // 初始化第一關
+    window.onload = () => initLevel1();
+</script>
+
+</body>
+</html>
