@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>互動故事-在課室分享積木</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
@@ -10,71 +10,84 @@
             --primary: #FFD93D;
             --secondary: #6BCB77;
             --accent: #FF6B6B;
+            --blue-3d: linear-gradient(145deg, #3498db, #2980b9);
             --bg: #F0F7FF;
         }
 
         body {
-            font-family: 'Comic Sans MS', 'Chalkboard SE', "Microsoft JhengHei", sans-serif;
+            font-family: 'Chalkboard SE', "Microsoft JhengHei", sans-serif;
             background-color: var(--bg);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: #333;
-            touch-action: manipulation;
+            margin: 0; padding: 0;
+            display: flex; flex-direction: column; align-items: center;
+            overflow-x: hidden;
         }
 
-        header { background: var(--primary); width: 100%; padding: 15px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .nav-buttons { margin: 15px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        header { background: var(--primary); width: 100%; padding: 10px 0; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .nav-buttons { margin: 10px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
         
         button {
-            padding: 12px 20px; font-size: 1rem; border: none; border-radius: 50px;
-            cursor: pointer; transition: 0.2s; font-weight: bold; box-shadow: 0 4px 0px #ddd;
+            padding: 10px 15px; font-size: 0.95rem; border: none; border-radius: 25px;
+            cursor: pointer; transition: 0.2s; font-weight: bold;
         }
-        button:active { transform: translateY(3px); box-shadow: none; }
         .level-btn { background: white; border: 2px solid var(--secondary); }
         .active-level { background: var(--secondary); color: white; }
 
         .game-container {
-            width: 90%; max-width: 600px; background: white; padding: 20px;
-            border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            margin-bottom: 30px; position: relative; min-height: 400px;
+            width: 90%; max-width: 500px; background: white; padding: 15px;
+            border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            margin-bottom: 20px; position: relative; box-sizing: border-box;
         }
 
-        .card-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 10px; }
+        /* Level 1: Tap Selection */
+        .card-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .story-card {
-            position: relative; width: 100%; aspect-ratio: 1/1; 
-            border: 4px solid #eee; border-radius: 15px; cursor: move; background: #fff;
+            position: relative; aspect-ratio: 1/1; border-radius: 12px;
+            border: 4px solid #eee; overflow: hidden; cursor: pointer;
         }
-        .story-card img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
-        .wrong-mark {
-            position: absolute; top: 10px; right: 10px; font-size: 40px;
-            background: rgba(255,255,255,0.8); border-radius: 50%; width: 50px; height: 50px;
-            display: flex; align-items: center; justify-content: center; visibility: hidden;
+        .story-card.selected { border-color: var(--secondary); }
+        .story-card img { width: 100%; height: 100%; object-fit: cover; }
+        .badge {
+            position: absolute; top: 5px; left: 5px; background: var(--secondary);
+            color: white; width: 25px; height: 25px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-weight: bold;
         }
-        .finish-btn {
-            position: absolute; bottom: -20px; right: 10px;
-            background: var(--accent); color: white; padding: 15px 30px; font-size: 1.2rem;
+        .wrong-emoji { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 50px; display: none; }
+
+        /* Level 2: 3D Audio Button & Hints */
+        .audio-btn-3d {
+            width: 60px; height: 60px; border-radius: 50%;
+            background: var(--blue-3d); border: none;
+            box-shadow: 0 5px 0 #1c5980, 0 8px 15px rgba(0,0,0,0.3);
+            display: flex; align-items: center; justify-content: center;
+            margin: 10px auto; cursor: pointer; color: white; font-size: 28px;
         }
+        .audio-btn-3d:active { transform: translateY(3px); box-shadow: 0 2px 0 #1c5980; }
+        .hint-btn { background: #eee; margin: 5px; padding: 8px; font-size: 0.8rem; }
+        .hint-img-container { margin-top: 10px; border: 2px dashed #ccc; padding: 5px; display: none; }
+        .full-story-view img { width: 48%; margin: 1%; border-radius: 5px; }
 
-        .question-box { display: flex; align-items: center; gap: 10px; background: #FFF9E6; padding: 15px; border-radius: 20px; margin-bottom: 15px; }
-        .hint-overlay { position: relative; width: 100%; }
-        .red-circle { position: absolute; border: 6px solid red; border-radius: 50%; pointer-events: none; display: none; animation: pulse 1s infinite; }
+        /* Level 3: Storytelling */
+        .big-img-container { position: relative; width: 100%; border-radius: 15px; overflow: hidden; }
+        .big-img-container img { width: 100%; display: block; }
+        .marker-star {
+            position: absolute; font-size: 40px; color: rgba(255, 215, 0, 0.6);
+            pointer-events: auto; transform: translate(-50%, -50%);
+        }
+        .grammar-cue {
+            background: #fff9e6; padding: 10px; margin: 10px 0;
+            border-radius: 10px; display: flex; align-items: center; justify-content: space-between;
+            border: 2px solid #ffeaa7; cursor: pointer;
+        }
+        .grammar-cue.checked::after { content: "✅"; }
+        .progress-container { width: 100%; background: #eee; height: 10px; border-radius: 5px; margin: 10px 0; }
+        .progress-bar { height: 100%; background: var(--secondary); border-radius: 5px; transition: 0.3s; }
 
-        .story-row { border-bottom: 2px dashed #ddd; padding: 15px 0; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        .record-controls { display: flex; gap: 10px; }
-        .btn-record { background: #ff4757; color: white; }
-        .btn-play { background: #1e90ff; color: white; }
-        .recording-active { animation: blink 1s infinite; background: #ff0000 !important; }
-
-        @keyframes blink { 50% { opacity: 0.5; } }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<header><h1>🎒 故事小錦囊</h1></header>
+<header><h1>互動故事-在課室分享積木</h1></header>
 
 <div class="nav-buttons">
     <button class="level-btn active-level" onclick="showLevel(1)">1. 排列次序</button>
@@ -83,168 +96,207 @@
 </div>
 
 <div id="level1" class="game-container">
-    <h3>請拖動圖片放回正確順序 (1-4)</h3>
-    <div class="card-grid" id="sortable-grid"></div>
-    <button class="finish-btn" onclick="checkOrder()">完成 ✅</button>
+    <div id="seq-game">
+        <div class="card-grid" id="tap-grid"></div>
+        <div style="text-align:right; margin-top:15px;">
+            <button onclick="clearSelection()" style="background:#ddd;">清除重選 ↩️</button>
+            <button onclick="checkSequence()" style="background:var(--accent); color:white;">完成 ✅</button>
+        </div>
+    </div>
+    <div id="correct-story" class="hidden">
+        <h3>做得好！順序係：</h3>
+        <div class="card-grid" id="result-grid"></div>
+    </div>
 </div>
 
 <div id="level2" class="game-container hidden">
-    <div class="question-box">
-        <button onclick="speakQuestion()" style="background:#FF9F43; color:white; border-radius:50%; width:45px; height:45px;">📢</button>
-        <h3 id="question-text" style="margin:0;">載入中...</h3>
+    <button class="audio-btn-3d" onclick="speakQuestion()"><span>📢</span></button>
+    <h3 id="q-text" style="text-align:center;"></h3>
+    
+    <div class="nav-buttons">
+        <button class="hint-btn" onclick="toggleHint('full')">再次觀看完整故事</button>
+        <button class="hint-btn" onclick="toggleHint('relevant')">觀看最相關的圖片</button>
+        <button class="hint-btn" onclick="toggleHint('circle')">圈出最相關的細節</button>
     </div>
-    <div class="hint-overlay">
-        <img id="quiz-img" src="Story1-1.png" style="width:100%; border-radius:20px;">
-        <div id="red-circle" class="red-circle"></div>
-    </div>
-    <div class="nav-buttons" style="margin-top:20px;">
-        <button onclick="toggleCircle()" style="background:#FFEAA7;">🔴 提示圈圈</button>
-        <button onclick="nextQuestion()" style="background:var(--secondary); color:white;">下一題 ⭐</button>
+
+    <div id="hint-display" class="hint-img-container"></div>
+    
+    <div style="text-align:center; margin-top:20px;">
+        <button onclick="nextQuestion()" style="background:var(--secondary); color:white;">答啱咗！下一題 ⭐</button>
     </div>
 </div>
 
 <div id="level3" class="game-container hidden">
-    <h3>望住圖畫錄低你講嘅故事：</h3>
-    <div id="recording-list"></div>
+    <div class="progress-container"><div id="p-bar" class="progress-bar" style="width: 25%;"></div></div>
+    <div class="big-img-container" id="story-teller-canvas" onclick="placeStar(event)">
+        <img id="teller-img" src="Story1-1.png">
+    </div>
+    <div id="grammar-box"></div>
+    <button id="next-page-btn" onclick="tellerNext()" style="width:100%; background:var(--primary); margin-top:10px;">下一頁 ➡️</button>
 </div>
 
 <script>
-    // 更新為 .png 擴展名
-    const storyImgs = ['Story1-1.png', 'Story1-2.png', 'Story1-3.png', 'Story1-4.png'];
-    let currentQuizIdx = 0;
+    const storyFiles = ['Story1-1.png', 'Story1-2.png', 'Story1-3.png', 'Story1-4.png'];
+    let selectedOrder = [];
 
-    const quizData = [
-        { q: "一開始，邊個玩積木？", img: "Story1-1.png", c: {t:'35%', l:'35%', w:'35%', h:'40%'} },
-        { q: "男仔喺邊度玩積木?", img: "Story1-1.png", c: {t:'5%', l:'5%', w:'90%', h:'30%'} },
-        { q: "女仔想同男仔一齊做咩呀？", img: "Story1-2.png", c: {t:'65%', l:'20%', w:'60%', h:'30%'} },
-        { q: "男仔有無同個女仔分享？", img: "Story1-3.png", c: {t:'50%', l:'40%', w:'30%', h:'30%'} },
-        { q: "點解老師會俾手指公佢哋？", img: "Story1-4.png", c: {t:'20%', l:'20%', w:'60%', h:'50%'} },
-        { q: "玩完積木之後，佢哋應該要做咩呀？", img: "Story1-4.png", c: {t:'25%', l:'5%', w:'30%', h:'40%'} }
+    // --- Level 1 Logic ---
+    function initLevel1() {
+        const grid = document.getElementById('tap-grid');
+        grid.innerHTML = '';
+        selectedOrder = [];
+        const shuffled = [...storyFiles].sort(() => Math.random() - 0.5);
+        shuffled.forEach(src => {
+            const div = document.createElement('div');
+            div.className = 'story-card';
+            div.innerHTML = `<img src="${src}"><div class="badge hidden"></div><div class="wrong-emoji">❓</div>`;
+            div.onclick = () => tapCard(div, src);
+            grid.appendChild(div);
+        });
+        document.getElementById('seq-game').classList.remove('hidden');
+        document.getElementById('correct-story').classList.add('hidden');
+    }
+
+    function tapCard(el, src) {
+        if (selectedOrder.includes(src)) return;
+        selectedOrder.push(src);
+        const badge = el.querySelector('.badge');
+        badge.innerText = selectedOrder.length;
+        badge.classList.remove('hidden');
+        el.classList.add('selected');
+    }
+
+    function clearSelection() {
+        initLevel1();
+    }
+
+    function checkSequence() {
+        const cards = document.querySelectorAll('#tap-grid .story-card');
+        let allCorrect = true;
+        
+        cards.forEach(card => {
+            const src = card.querySelector('img').getAttribute('src');
+            const userIdx = selectedOrder.indexOf(src);
+            const correctIdx = storyFiles.indexOf(src);
+            if (userIdx !== correctIdx) {
+                card.querySelector('.wrong-emoji').style.display = 'block';
+                allCorrect = false;
+            } else {
+                card.querySelector('.wrong-emoji').style.display = 'none';
+            }
+        });
+
+        if (allCorrect && selectedOrder.length === 4) {
+            confetti();
+            setTimeout(() => {
+                document.getElementById('seq-game').classList.add('hidden');
+                const resGrid = document.getElementById('result-grid');
+                resGrid.innerHTML = '';
+                storyFiles.forEach(s => resGrid.innerHTML += `<div class="story-card"><img src="${s}"></div>`);
+                document.getElementById('correct-story').classList.remove('hidden');
+                alert("你好俾心機排次序呀！🎉");
+            }, 500);
+        }
+    }
+
+    // --- Level 2 Logic ---
+    let qIdx = 0;
+    const questions = [
+        { q: "一開始，邊個玩積木？", rel: "Story1-1.png", hint: "story1-q1-hint.png" },
+        { q: "男仔喺邊度玩積木?", rel: "Story1-1.png", hint: "story1-q2-hint.png" },
+        { q: "女仔想同男仔一齊做咩呀？", rel: "Story1-2.png", hint: "story1-q3-hint.png" },
+        { q: "男仔有無同個女仔分享？", rel: "Story1-3.png", hint: "story1-q4-hint.png" },
+        { q: "點解老師會俾手指公佢哋？", rel: "Story1-4.png", hint: "story1-q5-hint.png" },
+        { q: "玩完積木之後，佢哋應該要做咩呀？", rel: "Story1-4.png", hint: "story1-q6-hint.png" }
     ];
+
+    function updateQuiz() {
+        document.getElementById('q-text').innerText = questions[qIdx].q;
+        document.getElementById('hint-display').style.display = 'none';
+        speakQuestion();
+    }
+
+    function speakQuestion() {
+        const msg = new SpeechSynthesisUtterance(questions[qIdx].q);
+        msg.lang = 'zh-HK';
+        msg.rate = 0.8;
+        window.speechSynthesis.speak(msg);
+    }
+
+    function toggleHint(type) {
+        const display = document.getElementById('hint-display');
+        if (display.style.display === 'block') { display.style.display = 'none'; return; }
+        
+        display.innerHTML = '';
+        display.style.display = 'block';
+        if (type === 'full') {
+            storyFiles.forEach(s => display.innerHTML += `<img src="${s}" style="width:45%; margin:2%">`);
+        } else if (type === 'relevant') {
+            display.innerHTML = `<img src="${questions[qIdx].rel}" style="width:100%">`;
+        } else {
+            display.innerHTML = `<img src="${questions[qIdx].hint}" style="width:100%">`;
+        }
+    }
+
+    function nextQuestion() {
+        qIdx = (qIdx + 1) % questions.length;
+        updateQuiz();
+    }
+
+    // --- Level 3 Logic ---
+    let tIdx = 0;
+    const grammar = [
+        "何時/ 誰/ 哪裏/ 做甚麼",
+        "發生甚麼事",
+        "怎樣做",
+        "最後怎樣/ 覺得怎樣"
+    ];
+
+    function initLevel3() {
+        tIdx = 0;
+        renderTeller();
+    }
+
+    function renderTeller() {
+        document.getElementById('teller-img').src = storyFiles[tIdx];
+        document.getElementById('p-bar').style.width = ((tIdx + 1) / 4 * 100) + "%";
+        const box = document.getElementById('grammar-box');
+        box.innerHTML = `<div class="grammar-cue" onclick="this.classList.toggle('checked')"><span>🏷️ ${grammar[tIdx]}</span></div>`;
+        // Clear stars
+        document.querySelectorAll('.marker-star').forEach(s => s.remove());
+    }
+
+    function placeStar(e) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const star = document.createElement('div');
+        star.className = 'marker-star';
+        star.innerText = '⭐';
+        star.style.left = x + 'px';
+        star.style.top = y + 'px';
+        star.ondblclick = (ev) => { ev.stopPropagation(); star.remove(); };
+        e.currentTarget.appendChild(star);
+    }
+
+    function tellerNext() {
+        if (tIdx < 3) {
+            tIdx++;
+            renderTeller();
+        } else {
+            confetti();
+            alert("欣賞你好俾心機講故事！");
+            showLevel(1);
+        }
+    }
 
     function showLevel(lvl) {
         document.querySelectorAll('.game-container').forEach(el => el.classList.add('hidden'));
         document.querySelectorAll('.level-btn').forEach(btn => btn.classList.remove('active-level'));
         document.getElementById('level' + lvl).classList.remove('hidden');
-        event.currentTarget.classList.add('active-level');
+        document.querySelectorAll('.level-btn')[lvl-1].classList.add('active-level');
         if(lvl === 1) initLevel1();
         if(lvl === 2) updateQuiz();
         if(lvl === 3) initLevel3();
-    }
-
-    function initLevel1() {
-        const grid = document.getElementById('sortable-grid');
-        grid.innerHTML = '';
-        const shuffled = [...storyImgs].sort(() => Math.random() - 0.5);
-        shuffled.forEach((src, idx) => {
-            const div = document.createElement('div');
-            div.className = 'story-card';
-            div.draggable = true;
-            div.innerHTML = `<img src="${src}"><div class="wrong-mark">❓</div>`;
-            div.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', idx); });
-            div.addEventListener('dragover', e => e.preventDefault());
-            div.addEventListener('drop', e => {
-                const draggedIdx = e.dataTransfer.getData('text/plain');
-                const cards = Array.from(grid.children);
-                const tempSrc = cards[draggedIdx].querySelector('img').src;
-                cards[draggedIdx].querySelector('img').src = cards[idx].querySelector('img').src;
-                cards[idx].querySelector('img').src = tempSrc;
-            });
-            grid.appendChild(div);
-        });
-    }
-
-    function checkOrder() {
-        const cards = document.querySelectorAll('#sortable-grid .story-card');
-        let allCorrect = true;
-        cards.forEach((card, i) => {
-            const currentImgSrc = decodeURIComponent(card.querySelector('img').src.split('/').pop());
-            const correctImgSrc = storyImgs[i];
-            const mark = card.querySelector('.wrong-mark');
-            if (currentImgSrc !== correctImgSrc) {
-                mark.style.visibility = 'visible';
-                allCorrect = false;
-            } else {
-                mark.style.visibility = 'hidden';
-            }
-        });
-        if (allCorrect) {
-            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-            setTimeout(() => alert("你好俾心機排次序呀！🎉"), 500);
-        }
-    }
-
-    function updateQuiz() {
-        const data = quizData[currentQuizIdx];
-        document.getElementById('question-text').innerText = data.q;
-        document.getElementById('quiz-img').src = data.img;
-        document.getElementById('red-circle').style.display = 'none';
-        speakQuestion();
-    }
-
-    function speakQuestion() {
-        const msg = new SpeechSynthesisUtterance(quizData[currentQuizIdx].q);
-        msg.lang = 'zh-HK';
-        msg.rate = 0.9;
-        window.speechSynthesis.speak(msg);
-    }
-
-    function toggleCircle() {
-        const circle = document.getElementById('red-circle');
-        const pos = quizData[currentQuizIdx].c;
-        circle.style.top = pos.t; circle.style.left = pos.l;
-        circle.style.width = pos.w; circle.style.height = pos.h;
-        circle.style.display = circle.style.display === 'none' ? 'block' : 'none';
-    }
-
-    function nextQuestion() {
-        currentQuizIdx = (currentQuizIdx + 1) % quizData.length;
-        updateQuiz();
-    }
-
-    let mediaRecorder;
-    let audioBlobs = {};
-
-    function initLevel3() {
-        const list = document.getElementById('recording-list');
-        list.innerHTML = '';
-        storyImgs.forEach((src, i) => {
-            const row = document.createElement('div');
-            row.className = 'story-row';
-            row.innerHTML = `
-                <img src="${src}" style="width:150px; border-radius:10px;">
-                <div class="record-controls">
-                    <button class="btn-record" id="rec-${i}" onclick="toggleRecord(${i})">⏺️ 錄音</button>
-                    <button class="btn-play" id="play-${i}" onclick="playAudio(${i})" disabled>▶️ 聽返</button>
-                </div>`;
-            list.appendChild(row);
-        });
-    }
-
-    async function toggleRecord(id) {
-        const btn = document.getElementById(`rec-${id}`);
-        if (!mediaRecorder || mediaRecorder.state === "inactive") {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            let chunks = [];
-            mediaRecorder.ondataavailable = e => chunks.push(e.data);
-            mediaRecorder.onstop = () => {
-                audioBlobs[id] = new Blob(chunks, { type: 'audio/wav' });
-                document.getElementById(`play-${id}`).disabled = false;
-            };
-            mediaRecorder.start();
-            btn.innerText = "⏹️ 停止";
-            btn.classList.add('recording-active');
-        } else {
-            mediaRecorder.stop();
-            btn.innerText = "⏺️ 錄音";
-            btn.classList.remove('recording-active');
-        }
-    }
-
-    function playAudio(id) {
-        const audio = new Audio(URL.createObjectURL(audioBlobs[id]));
-        audio.play();
     }
 
     window.onload = () => initLevel1();
