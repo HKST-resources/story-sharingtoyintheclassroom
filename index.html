@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>互動故事-在課室分享積木</title>
+    <title>互動故事-在課室分享積木2</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root {
@@ -22,12 +22,12 @@
         .game-container { width: 95%; max-width: 900px; background: white; padding: 20px; border-radius: 25px; box-shadow: 0 8px 30px rgba(0,0,0,0.08); margin-bottom: 20px; box-sizing: border-box; }
         .instruction { background: #E1F5FE; padding: 12px; border-radius: 12px; font-size: 0.9rem; color: #01579B; margin-bottom: 15px; border-left: 5px solid #03A9F4; }
 
-        /* Level 1 */
-        .grid-layout { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+        /* Level 1: Fixed Layout */
+        .grid-layout { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 10px auto 20px auto; width: 100%; }
         @media (min-width: 600px) { .grid-layout { grid-template-columns: repeat(4, 1fr); } }
-        .drop-zone { aspect-ratio: 1/1; border: 3px dashed #ccc; border-radius: 15px; position: relative; background: #fafafa; }
-        .drop-zone::before { content: attr(data-num); position: absolute; top: 5px; left: 8px; font-size: 1.2rem; font-weight: bold; color: #ddd; }
-        .img-card { width: 100%; height: 100%; border-radius: 12px; cursor: pointer; object-fit: cover; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .drop-zone { aspect-ratio: 1/1; border: 3px dashed #ccc; border-radius: 15px; position: relative; background: #fafafa; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .drop-zone::before { content: attr(data-num); position: absolute; top: 5px; left: 8px; font-size: 1.2rem; font-weight: bold; color: #ddd; z-index: 0; }
+        .img-card { width: 100%; height: 100%; object-fit: cover; cursor: pointer; z-index: 1; }
         .wrong-float { position: absolute; top: -5px; right: -5px; font-size: 35px; background: white; border-radius: 50%; display: none; z-index: 10; }
 
         /* Level 2 */
@@ -37,29 +37,39 @@
         .h-mid { background: #FFF3E0; color: #EF6C00; border-color: #FFE0B2; }
         .h-high { background: #FFEBEE; color: #C62828; border-color: #FFCDD2; }
 
-        /* Level 3: Responsive Stacking */
-        .story-teller-wrapper { display: flex; flex-direction: column; gap: 20px; }
-        @media (min-width: 768px) { .story-teller-wrapper { flex-direction: row; align-items: flex-start; } .big-img-container { flex: 3; } .grammar-sidebar { flex: 1; display: flex; flex-direction: column; gap: 10px; } }
-        
-        .big-img-container { position: relative; width: 100%; border-radius: 15px; border: 4px solid #eee; overflow: hidden; }
+        /* Level 3: Advanced Layout */
+        .story-teller-wrapper { display: flex; flex-direction: column; gap: 15px; }
+        .big-img-container { position: relative; width: 100%; border-radius: 15px; border: 4px solid #eee; overflow: hidden; touch-action: none; }
         .big-img-container img { width: 100%; display: block; pointer-events: none; }
-        .marker-star { position: absolute; font-size: 45px; opacity: 0.5; transform: translate(-50%, -50%); cursor: pointer; user-select: none; z-index: 20; }
+        .marker-star { position: absolute; font-size: 50px; opacity: 0.8; transform: translate(-50%, -50%); cursor: pointer; user-select: none; z-index: 20; transition: transform 0.1s; }
+        .marker-star:active { transform: translate(-50%, -50%) scale(1.2); }
+
+        .grammar-area { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
         
-        .grammar-grid-mobile { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 15px; }
-        @media (min-width: 768px) { .grammar-grid-mobile { display: none; } }
-        
-        .grammar-card { width: 70px; height: 70px; position: relative; border: 2px solid #eee; border-radius: 10px; background: white; cursor: pointer; }
+        /* iPad/PC Sidebar */
+        @media (min-width: 768px) {
+            .story-teller-wrapper { flex-direction: row; align-items: stretch; }
+            .big-img-container { flex: 4; }
+            .grammar-area { flex: 1; flex-direction: column; justify-content: flex-start; margin-top: 0; }
+            .grammar-card { width: 110px !important; height: 110px !important; } /* Enlarged for child */
+        }
+
+        .grammar-card { width: 85px; height: 85px; position: relative; border: 2px solid #eee; border-radius: 12px; background: white; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .grammar-card img { width: 100%; height: 100%; object-fit: contain; }
-        .grammar-card.checked::after { content: '✔️'; position: absolute; inset: 0; background: rgba(107, 203, 119, 0.7); display: flex; align-items: center; justify-content: center; font-size: 35px; color: white; }
-        .grammar-card.grey { filter: grayscale(1); opacity: 0.4; }
+        .grammar-card.checked::after { content: '✔️'; position: absolute; inset: 0; background: rgba(107, 203, 119, 0.75); display: flex; align-items: center; justify-content: center; font-size: 45px; color: white; border-radius: 10px; }
+        .grammar-card.grey { filter: grayscale(1); opacity: 0.3; }
 
-        /* Results Page */
-        .result-row { display: flex; gap: 10px; padding: 10px; border-bottom: 1px solid #eee; align-items: center; }
-        .result-row img.thumb { width: 100px; border-radius: 8px; }
-        .recording-bar { background: #ff4757; color: white; padding: 15px; border-radius: 15px; text-align: center; margin-bottom: 15px; cursor: pointer; }
-        .recording-active { animation: pulse 1.5s infinite; background: #c0392b; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+        .tool-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; width: 100%; }
+        .eraser-btn { background: #eee; border: 2px solid #ccc; font-size: 1.5rem; border-radius: 12px; padding: 5px 15px; cursor: pointer; }
+        .eraser-active { background: #ffdada; border-color: #ff4757; animation: blink 1s infinite; }
 
+        /* Results */
+        .result-row { display: flex; gap: 15px; padding: 15px; border-bottom: 1px solid #eee; align-items: center; }
+        .result-row img.thumb { width: 120px; border-radius: 8px; }
+        .recording-bar { flex: 1; background: #ff4757; color: white; padding: 15px; border-radius: 15px; text-align: center; font-weight: bold; cursor: pointer; }
+        .recording-active { background: #c0392b; animation: pulse 1.5s infinite; }
+        @keyframes blink { 50% { border-color: transparent; } }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
         .hidden { display: none; }
     </style>
 </head>
@@ -82,7 +92,7 @@
         <div class="drop-zone" data-num="4" id="q4"></div>
     </div>
     <div class="grid-layout" id="shuffle-box"></div>
-    <div style="text-align:center;"><button onclick="checkLevel1()" style="background:var(--accent); color:white;">完成 ✅</button></div>
+    <div style="text-align:center;"><button onclick="checkLevel1()" style="background:var(--accent); color:white; width:200px; font-size:1.2rem;">完成 ✅</button></div>
 </div>
 
 <div id="level2" class="game-container hidden">
@@ -94,38 +104,42 @@
         <button class="hint-btn-v3 h-mid" onclick="toggleHint('relevant')">🔍 2級：觀看最相關圖片</button>
         <button class="hint-btn-v3 h-high" onclick="toggleHint('circle')">🎯 3級：圈出最相關細節</button>
     </div>
-    <div id="hint-display" style="display:none; margin-top:15px; text-align:center; border:1px solid #ddd; padding:10px; border-radius:15px;"></div>
-    <div style="text-align:center; margin-top:20px;"><button onclick="nextQuestion()" style="background:var(--secondary); color:white;">下一題 ⭐</button></div>
+    <div id="hint-display" style="display:none; margin-top:15px; text-align:center;"></div>
+    <div style="text-align:center; margin-top:20px;"><button onclick="nextQuestion()" style="background:var(--secondary); color:white; width:150px;">下一題 ⭐</button></div>
 </div>
 
 <div id="level3" class="game-container hidden">
     <div id="teller-main">
-        <div class="instruction">家長指南：家長可點擊紅按鈕開始全程錄音。引導孩子說故事，點擊圖片可放置星號引導視覺注意（雙擊星號刪除），說完對應元素後請點擊下方的圖標打勾。</div>
-        <div id="rec-status" class="recording-bar" onclick="toggleGlobalRecord()">⏺️ 開始全程錄音</div>
+        <div class="instruction">家長指南：家長可點擊紅按鈕開始全程錄音。引導孩子說故事，點擊圖片可放置星號（點擊🧹後點星號刪除），說完對應元素後請點擊圖標打勾。</div>
         
+        <div class="tool-bar">
+            <div id="rec-status" class="recording-bar" onclick="toggleGlobalRecord()">⏺️ 開始全程錄音</div>
+            <button id="eraser" class="eraser-btn" onclick="toggleEraser()">🧹</button>
+        </div>
+
         <div class="story-teller-wrapper">
-            <div class="big-img-container" id="canvas-3" onclick="placeStar(event)">
+            <div class="big-img-container" id="canvas-3" onclick="handleCanvasClick(event)">
                 <img id="teller-img" src="">
             </div>
-            <div class="grammar-sidebar" id="grammar-sidebar"></div>
+            <div class="grammar-area" id="grammar-area"></div>
         </div>
-        <div class="grammar-grid-mobile" id="grammar-mobile"></div>
         
-        <button onclick="tellerNext()" style="width:100%; background:var(--primary); margin-top:20px;">下一頁 ➡️</button>
+        <button onclick="tellerNext()" style="width:100%; background:var(--primary); margin-top:20px; font-size:1.3rem;">下一頁 ➡️</button>
     </div>
 
     <div id="teller-result" class="hidden">
         <h3>講故事總結</h3>
-        <button id="play-full-rec" onclick="playGlobalRecord()" style="background:var(--blue-3d); color:white; width:100%; margin-bottom:20px;">▶️ 聽返小朋友講嘅故事</button>
+        <button id="play-full-rec" onclick="playGlobalRecord()" style="background:var(--blue-3d); color:white; width:100%; padding:15px; border-radius:15px; margin-bottom:20px;">▶️ 聽返小朋友講嘅故事</button>
         <div id="summary-list"></div>
-        <button onclick="showLevel(1)" style="width:100%; margin-top:20px; background:#eee;">返回第一關</button>
+        <button onclick="showLevel(1)" style="width:100%; margin-top:20px; background:#eee; padding:15px; border-radius:15px;">返回第一關</button>
     </div>
 </div>
 
 <script>
-    const storyImgs = ['Story1-1.png', 'Story1-2.png', 'Story1-3.png', 'Story1-4.png'];
+    const storyImgs = ['story1-1.png', 'story1-2.png', 'story1-3.png', 'story1-4.png'];
     let currentSeq = [null, null, null, null];
-    let grammarStatus = [[], [], [], []]; // Tracks which icons were ticked per page
+    let grammarStatus = [[], [], [], []];
+    let isEraserMode = false;
 
     // --- Level 1 ---
     function initLevel1() {
@@ -134,12 +148,12 @@
         renderSequence();
         [...storyImgs].sort(()=>Math.random()-0.5).forEach((src, idx) => {
             const img = document.createElement('img');
-            img.src = src; img.className = 'img-card'; img.id = 'shuf-'+idx;
+            img.src = src; img.className = 'img-card';
             img.onclick = () => {
                 const emptyIdx = currentSeq.indexOf(null);
                 if(emptyIdx !== -1) {
                     currentSeq[emptyIdx] = src;
-                    img.style.visibility = 'hidden'; // Keep position
+                    img.style.visibility = 'hidden';
                     renderSequence();
                 }
             };
@@ -181,12 +195,12 @@
     // --- Level 2 ---
     let qIdx = 0;
     const questions = [
-        { q: "1. 一開始，邊個玩積木？", rel: "Story1-1.png", hint: "story1-q1-hint.png" },
-        { q: "2. 男仔喺邊度玩積木?", rel: "Story1-1.png", hint: "story1-q2-hint.png" },
-        { q: "3. 女仔想同男仔一齊做咩呀？", rel: "Story1-2.png", hint: "story1-q3-hint.png" },
-        { q: "4. 男仔有無同個女仔分享？", rel: "Story1-3.png", hint: "story1-q4-hint.png" },
-        { q: "5. 點解老師會俾手指公佢哋？", rel: "Story1-4.png", hint: "story1-q5-hint.png" },
-        { q: "6. 玩完積木之後，佢哋應該要做咩呀？", rel: "Story1-4.png", hint: "story1-q6-hint.png" }
+        { q: "1. 一開始，邊個玩積木？", rel: "story1-1.png", hint: "story1-q1-hint.png" },
+        { q: "2. 男仔喺邊度玩積木?", rel: "story1-1.png", hint: "story1-q2-hint.png" },
+        { q: "3. 女仔想同男仔一齊做咩呀？", rel: "story1-2.png", hint: "story1-q3-hint.png" },
+        { q: "4. 男仔有無同個女仔分享？", rel: "story1-3.png", hint: "story1-q4-hint.png" },
+        { q: "5. 點解老師會俾手指公佢哋？", rel: "story1-4.png", hint: "story1-q5-hint.png" },
+        { q: "6. 玩完積木之後，佢哋應該要做咩呀？", rel: "story1-4.png", hint: "story1-q6-hint.png" }
     ];
 
     function updateQuiz() {
@@ -203,9 +217,9 @@
     function toggleHint(type) {
         const div = document.getElementById('hint-display');
         div.style.display = 'block'; div.innerHTML = '';
-        if(type==='full') storyImgs.forEach(s => div.innerHTML += `<img src="${s}" style="width:45%; margin:2px">`);
-        else if(type==='relevant') div.innerHTML = `<img src="${questions[qIdx].rel}" style="width:90%">`;
-        else div.innerHTML = `<img src="${questions[qIdx].hint}" style="width:90%">`;
+        if(type==='full') storyImgs.forEach(s => div.innerHTML += `<img src="${s}" style="width:45%; margin:2px; border-radius:8px; border:1px solid #ddd;">`);
+        else if(type==='relevant') div.innerHTML = `<img src="${questions[qIdx].rel}" style="width:90%; border-radius:10px;">`;
+        else div.innerHTML = `<img src="${questions[qIdx].hint}" style="width:90%; border-radius:10px;">`;
     }
 
     function nextQuestion() {
@@ -231,48 +245,56 @@
 
     function renderTeller() {
         document.getElementById('teller-img').src = storyImgs[tIdx];
-        const side = document.getElementById('grammar-sidebar');
-        const mob = document.getElementById('grammar-mobile');
-        side.innerHTML = ''; mob.innerHTML = '';
+        const area = document.getElementById('grammar-area');
+        area.innerHTML = '';
         
         grammarConfig[tIdx].forEach(icon => {
-            const card = createGrammarCard(icon);
-            side.appendChild(card.cloneNode(true));
-            mob.appendChild(card);
+            const card = document.createElement('div');
+            card.className = 'grammar-card';
+            if(grammarStatus[tIdx].includes(icon)) card.classList.add('checked');
+            card.innerHTML = `<img src="${icon}">`;
+            card.onclick = (e) => {
+                card.classList.toggle('checked');
+                if(card.classList.contains('checked')) {
+                    if(!grammarStatus[tIdx].includes(icon)) grammarStatus[tIdx].push(icon);
+                } else {
+                    grammarStatus[tIdx] = grammarStatus[tIdx].filter(i => i !== icon);
+                }
+            };
+            area.appendChild(card);
         });
         document.querySelectorAll('.marker-star').forEach(s => s.remove());
     }
 
-    function createGrammarCard(icon) {
-        const d = document.createElement('div');
-        d.className = 'grammar-card';
-        if(grammarStatus[tIdx].includes(icon)) d.classList.add('checked');
-        d.innerHTML = `<img src="${icon}">`;
-        d.onclick = () => {
-            d.classList.toggle('checked');
-            if(d.classList.contains('checked')) grammarStatus[tIdx].push(icon);
-            else grammarStatus[tIdx] = grammarStatus[tIdx].filter(i => i !== icon);
-            // Sync side/mobile
-            document.querySelectorAll(`.grammar-card img[src="${icon}"]`).forEach(img => img.parentElement.classList.toggle('checked', d.classList.contains('checked')));
-        };
-        return d;
+    function toggleEraser() {
+        isEraserMode = !isEraserMode;
+        document.getElementById('eraser').classList.toggle('eraser-active', isEraserMode);
     }
 
-    function placeStar(e) {
+    function handleCanvasClick(e) {
+        if(isEraserMode) return; // In eraser mode, click should only target stars
+        
         const rect = e.currentTarget.getBoundingClientRect();
         const x = ((e.clientX - rect.left) / rect.width) * 100;
         const y = ((e.clientY - rect.top) / rect.height) * 100;
+        
         const star = document.createElement('div');
         star.className = 'marker-star'; star.innerText = '⭐';
         star.style.left = x + '%'; star.style.top = y + '%';
-        star.addEventListener('dblclick', (ev) => { ev.stopPropagation(); star.remove(); });
+        
+        star.onclick = (ev) => {
+            if(isEraserMode) {
+                ev.stopPropagation();
+                star.remove();
+            }
+        };
         e.currentTarget.appendChild(star);
     }
 
     function tellerNext() {
         if(tIdx < 3) { tIdx++; renderTeller(); }
         else { 
-            if(mediaRecorder && mediaRecorder.state === "recording") toggleGlobalRecord();
+            if(mediaRecorder && mediaRecorder.state === "recording") stopAndSave();
             confetti(); showResultPage(); 
         }
     }
@@ -284,32 +306,46 @@
         storyImgs.forEach((src, i) => {
             let iconsHtml = grammarConfig[i].map(icon => {
                 const isChecked = grammarStatus[i].includes(icon);
-                return `<div class="grammar-card ${isChecked?'':'grey'}"><img src="${icon}"></div>`;
+                return `<div class="grammar-card ${isChecked?'':'grey'}" style="width:50px; height:50px; margin:2px;"><img src="${icon}"></div>`;
             }).join('');
             list.innerHTML += `<div class="result-row"><img src="${src}" class="thumb"><div>${iconsHtml}</div></div>`;
         });
     }
 
-    // --- Global Recording Logic ---
-    let mediaRecorder; let audioChunks = []; let fullAudioBlob;
+    // --- Improved Recording Logic ---
+    let mediaRecorder; let audioChunks = []; let audioUrl;
     async function toggleGlobalRecord() {
         const btn = document.getElementById('rec-status');
         if(!mediaRecorder || mediaRecorder.state === "inactive") {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
-            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-            mediaRecorder.onstop = () => { fullAudioBlob = new Blob(audioChunks, { type: 'audio/wav' }); };
-            mediaRecorder.start();
-            btn.innerText = "⏹️ 停止錄音"; btn.classList.add('recording-active');
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                mediaRecorder.ondataavailable = e => { if(e.data.size > 0) audioChunks.push(e.data); };
+                mediaRecorder.start(1000); // Capture data every 1s
+                btn.innerText = "⏹️ 停止錄音"; btn.classList.add('recording-active');
+            } catch(e) { alert("無法啟動麥克風，請檢查權限。"); }
         } else {
+            stopAndSave();
+            btn.innerText = "✅ 錄音完成 (可聽回)"; btn.classList.remove('recording-active');
+        }
+    }
+
+    function stopAndSave() {
+        if(mediaRecorder && mediaRecorder.state !== "inactive") {
             mediaRecorder.stop();
-            btn.innerText = "✅ 錄音已完成"; btn.classList.remove('recording-active');
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' });
+                audioUrl = URL.createObjectURL(blob);
+            };
         }
     }
 
     function playGlobalRecord() {
-        if(fullAudioBlob) { const audio = new Audio(URL.createObjectURL(fullAudioBlob)); audio.play(); }
+        if(audioUrl) {
+            const audio = new Audio(audioUrl);
+            audio.play().catch(e => console.error("Play failed", e));
+        } else { alert("未有錄音存檔。"); }
     }
 
     function showLevel(lvl) {
