@@ -22,7 +22,7 @@
         .game-container { width: 95%; max-width: 900px; background: white; padding: 20px; border-radius: 25px; box-shadow: 0 8px 30px rgba(0,0,0,0.08); margin-bottom: 20px; box-sizing: border-box; }
         .instruction { background: #E1F5FE; padding: 12px; border-radius: 12px; font-size: 0.9rem; color: #01579B; margin-bottom: 15px; border-left: 5px solid #03A9F4; }
 
-        /* Level 1: Fixed Layout */
+        /* Level 1 */
         .grid-layout { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 10px auto 20px auto; width: 100%; justify-items: center; }
         @media (min-width: 600px) { .grid-layout { grid-template-columns: repeat(4, 1fr); } }
         .drop-zone { width: 100%; aspect-ratio: 1/1; border: 3px dashed #ccc; border-radius: 15px; position: relative; background: #fafafa; display: flex; align-items: center; justify-content: center; overflow: hidden; }
@@ -32,48 +32,41 @@
 
         /* Level 2 */
         .audio-btn-3d { width: 70px; height: 70px; border-radius: 50%; background: var(--blue-3d); margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 0 #1c5980; cursor: pointer; border: none; color: white; font-size: 30px; }
-        .hint-btn-v3 { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 15px; font-size: 0.9rem; border: 2px solid transparent; width: 100%; margin-bottom: 8px; }
-        .h-low { background: #E8F5E9; color: #2E7D32; border-color: #C8E6C9; }
-        .h-mid { background: #FFF3E0; color: #EF6C00; border-color: #FFE0B2; }
-        .h-high { background: #FFEBEE; color: #C62828; border-color: #FFCDD2; }
 
-        /* Level 3: Advanced Layout */
+        /* Level 3 */
         .story-teller-wrapper { display: flex; flex-direction: column; gap: 15px; }
         .big-img-container { position: relative; width: 100%; border-radius: 15px; border: 4px solid #eee; overflow: hidden; touch-action: none; }
         .big-img-container img { width: 100%; display: block; pointer-events: none; }
-        
-        /* Star Opacity Fix: Change to 0.65 */
-        .marker-star { position: absolute; font-size: 50px; opacity: 0.65; transform: translate(-50%, -50%); cursor: pointer; user-select: none; z-index: 20; transition: transform 0.1s; }
-        .marker-star:active { transform: translate(-50%, -50%) scale(1.2); }
+        .marker-star { position: absolute; font-size: 50px; opacity: 0.65; transform: translate(-50%, -50%); cursor: pointer; user-select: none; z-index: 20; }
 
-        .grammar-area { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
-        
+        .grammar-area { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
         @media (min-width: 768px) {
             .story-teller-wrapper { flex-direction: row; align-items: stretch; }
             .big-img-container { flex: 4; }
-            .grammar-area { flex: 1; flex-direction: column; justify-content: flex-start; margin-top: 0; }
+            .grammar-area { flex: 1; flex-direction: column; justify-content: flex-start; }
             .grammar-card { width: 110px !important; height: 110px !important; }
         }
 
-        .grammar-card { width: 85px; height: 85px; position: relative; border: 2px solid #eee; border-radius: 12px; background: white; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .grammar-card { width: 85px; height: 85px; position: relative; border: 2px solid #eee; border-radius: 12px; background: white; cursor: pointer; }
         .grammar-card img { width: 100%; height: 100%; object-fit: contain; }
         .grammar-card.checked::after { content: '✔️'; position: absolute; inset: 0; background: rgba(107, 203, 119, 0.75); display: flex; align-items: center; justify-content: center; font-size: 45px; color: white; border-radius: 10px; }
         .grammar-card.grey { filter: grayscale(1); opacity: 0.3; }
 
-        .tool-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; width: 100%; }
-        .eraser-btn { background: #eee; border: 2px solid #ccc; font-size: 1.5rem; border-radius: 12px; padding: 5px 15px; cursor: pointer; }
-        .eraser-active { background: #ffdada; border-color: #ff4757; animation: blink 1s infinite; }
-
-        /* Results Layout Fix: Horizontal alignment */
+        /* Result Area */
         .result-row { display: flex; gap: 15px; padding: 15px; border-bottom: 1px solid #eee; align-items: center; }
-        .result-row img.thumb { width: 120px; border-radius: 8px; flex-shrink: 0; }
-        .result-icons-container { display: flex; flex-direction: row; flex-wrap: wrap; gap: 5px; align-items: center; }
+        .result-row img.thumb { width: 120px; border-radius: 8px; }
+        .export-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        .share-btn { flex: 1; padding: 15px; border-radius: 15px; font-size: 1rem; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; }
 
-        .recording-bar { flex: 1; background: #ff4757; color: white; padding: 15px; border-radius: 15px; text-align: center; font-weight: bold; cursor: pointer; }
+        .recording-bar { width: 100%; background: #ff4757; color: white; padding: 15px; border-radius: 15px; text-align: center; font-weight: bold; cursor: pointer; margin-bottom: 10px; box-sizing: border-box; }
         .recording-active { background: #c0392b; animation: pulse 1.5s infinite; }
-        @keyframes blink { 50% { border-color: transparent; } }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        
         .hidden { display: none; }
+
+        @media print {
+            .nav-buttons, .instruction, .share-btn, #play-full-rec, header, button, .recording-bar { display: none !important; }
+            .game-container { box-shadow: none; width: 100%; border: none; }
+        }
     </style>
 </head>
 <body>
@@ -87,7 +80,7 @@
 </div>
 
 <div id="level1" class="game-container">
-    <div class="instruction">家長指南：請點擊下方的圖片。圖片會按點擊順序填入上方的空格中。如果想更改位置，再次點擊空格內的圖片即可退回。</div>
+    <div class="instruction">家長指南：請點擊下方的圖片。圖片會按點擊順序填入上方的空格。再次點擊空格圖片可撤回。</div>
     <div class="grid-layout" id="sequence-box">
         <div class="drop-zone" data-num="1" id="q1"></div>
         <div class="drop-zone" data-num="2" id="q2"></div>
@@ -102,62 +95,59 @@
     <div class="instruction">家長指南：點擊藍色喇叭播放問題，如孩子未能回答，可由上至下點擊提示。</div>
     <button class="audio-btn-3d" onclick="speakQuestion()">📢</button>
     <h3 id="q-text" style="text-align:center;"></h3>
-    <div style="max-width:400px; margin: 0 auto;">
-        <button class="hint-btn-v3 h-low" onclick="toggleHint('full')">💡 1級：再次觀看完整故事</button>
-        <button class="hint-btn-v3 h-mid" onclick="toggleHint('relevant')">🔍 2級：觀看最相關圖片</button>
-        <button class="hint-btn-v3 h-high" onclick="toggleHint('circle')">🎯 3級：圈出最相關細節</button>
-    </div>
-    <div id="hint-display" style="display:none; margin-top:15px; text-align:center;"></div>
+    <div id="hint-display" style="text-align:center;"></div>
     <div style="text-align:center; margin-top:20px;"><button onclick="nextQuestion()" style="background:var(--secondary); color:white; width:150px;">下一題 ⭐</button></div>
 </div>
 
 <div id="level3" class="game-container hidden">
     <div id="teller-main">
-        <div class="instruction">家長指南：家長可點擊紅按鈕開始全程錄音。引導孩子說故事，點擊圖片可放置星號（點擊🧹後點星號刪除），說完對應元素後請點擊圖標打勾。</div>
-        
-        <div class="tool-bar">
-            <div id="rec-status" class="recording-bar" onclick="toggleGlobalRecord()">⏺️ 開始全程錄音</div>
-            <button id="eraser" class="eraser-btn" onclick="toggleEraser()">🧹</button>
-        </div>
-
+        <div class="instruction">家長指南：家長可點擊紅按鈕開始全程錄音。引導孩子說故事，點擊圖片可放置星號（點擊🧹後點星號刪除），說完對應元素後請點擊圖標打勾。。</div>
+        <div id="rec-status" class="recording-bar" onclick="toggleGlobalRecord()">⏺️ 開始全程錄音</div>
         <div class="story-teller-wrapper">
             <div class="big-img-container" id="canvas-3" onclick="handleCanvasClick(event)">
                 <img id="teller-img" src="">
             </div>
             <div class="grammar-area" id="grammar-area"></div>
         </div>
-        
         <button onclick="tellerNext()" style="width:100%; background:var(--primary); margin-top:20px; font-size:1.3rem;">下一頁 ➡️</button>
     </div>
 
     <div id="teller-result" class="hidden">
         <h3>講故事總結</h3>
-        <button id="play-full-rec" onclick="playGlobalRecord()" style="background:var(--blue-3d); color:white; width:100%; padding:15px; border-radius:15px; margin-bottom:20px;">▶️ 聽返小朋友講嘅故事</button>
+        <div class="export-group">
+            <button class="share-btn" style="background: #25D366;" onclick="exportRecording()">🟢 分享錄音到 WhatsApp</button>
+            <button class="share-btn" style="background: #3498db;" onclick="window.print()">📄 導出/保存結果圖片</button>
+        </div>
+        <button id="play-full-rec" onclick="playGlobalRecord()" style="background:var(--blue-3d); color:white; width:100%; padding:15px; border-radius:15px; margin-bottom:20px;">▶️ 重聽故事</button>
         <div id="summary-list"></div>
-        <button onclick="showLevel(1)" style="width:100%; margin-top:20px; background:#eee; padding:15px; border-radius:15px;">返回第一關</button>
+        <button onclick="location.reload()" style="width:100%; margin-top:20px; background:#eee; padding:15px; border-radius:15px;">重新開始</button>
     </div>
 </div>
 
 <script>
-    // 圖片路徑修正：直接引用根目錄檔名
     const storyImgs = ['story1-1.png', 'story1-2.png', 'story1-3.png', 'story1-4.png'];
     let currentSeq = [null, null, null, null];
     let grammarStatus = [[], [], [], []];
-    let isEraserMode = false;
+    const hooraySound = new Audio('hooray.mp3');
+
+    function playSuccessEffect() {
+        confetti();
+        hooraySound.currentTime = 0;
+        hooraySound.play().catch(e => console.log("Sound play failed", e));
+    }
 
     // --- Level 1 ---
     function initLevel1() {
         const sBox = document.getElementById('shuffle-box');
         sBox.innerHTML = ''; currentSeq = [null, null, null, null];
         renderSequence();
-        [...storyImgs].sort(()=>Math.random()-0.5).forEach((src, idx) => {
+        [...storyImgs].sort(()=>Math.random()-0.5).forEach((src) => {
             const img = document.createElement('img');
             img.src = src; img.className = 'img-card';
             img.onclick = () => {
                 const emptyIdx = currentSeq.indexOf(null);
                 if(emptyIdx !== -1) {
-                    currentSeq[emptyIdx] = src;
-                    img.style.visibility = 'hidden';
+                    currentSeq[emptyIdx] = src; img.style.visibility = 'hidden';
                     renderSequence();
                 }
             };
@@ -173,43 +163,37 @@
                 const img = document.createElement('img');
                 img.src = currentSeq[i]; img.className = 'img-card';
                 img.onclick = () => {
-                    const src = currentSeq[i];
-                    currentSeq[i] = null;
+                    const src = currentSeq[i]; currentSeq[i] = null;
                     document.querySelectorAll('#shuffle-box img').forEach(sImg => {
                         if(sImg.src.includes(src)) sImg.style.visibility = 'visible';
                     });
                     renderSequence();
                 };
-                const wrong = document.createElement('div'); wrong.className = 'wrong-float'; wrong.innerText = '❓';
-                zone.appendChild(img); zone.appendChild(wrong);
+                zone.appendChild(img);
             }
         }
     }
 
     function checkLevel1() {
-        let allCorrect = true;
-        currentSeq.forEach((src, i) => {
-            const mark = document.getElementById('q'+(i+1)).querySelector('.wrong-float');
-            if(src !== storyImgs[i]) { if(mark) mark.style.display='block'; allCorrect=false; }
-            else { if(mark) mark.style.display='none'; }
-        });
-        if(allCorrect && !currentSeq.includes(null)) confetti();
+        let allCorrect = currentSeq.every((src, i) => src === storyImgs[i]);
+        if(allCorrect && !currentSeq.includes(null)) playSuccessEffect();
+        else alert("排序還未正確，再試試看！");
     }
 
     // --- Level 2 ---
     let qIdx = 0;
     const questions = [
-        { q: "1. 一開始，邊個玩積木？", rel: "story1-1.png", hint: "story1-q1-hint.png" },
-        { q: "2. 男仔喺邊度玩積木?", rel: "story1-1.png", hint: "story1-q2-hint.png" },
-        { q: "3. 女仔想同男仔一齊做咩呀？", rel: "story1-2.png", hint: "story1-q3-hint.png" },
-        { q: "4. 男仔有無同個女仔分享？", rel: "story1-3.png", hint: "story1-q4-hint.png" },
-        { q: "5. 點解老師會俾手指公佢哋？", rel: "story1-4.png", hint: "story1-q5-hint.png" },
-        { q: "6. 玩完積木之後，佢哋應該要做咩呀？", rel: "story1-4.png", hint: "story1-q6-hint.png" }
+        { q: "1. 一開始，邊個玩積木？", rel: "story1-1.png" },
+        { q: "2. 男仔喺邊度玩積木?", rel: "story1-1.png" },
+        { q: "3. 女仔想同男仔一齊做咩？", rel: "story1-2.png" },
+        { q: "4. 男仔有無同個女仔分享？", rel: "story1-3.png" },
+        { q: "5. 點解老師會俾手指公佢哋？", rel: "story1-4.png" },
+        { q: "6. 玩完積木之後，佢哋應該要做咩？", rel: "story1-4.png" }
     ];
 
     function updateQuiz() {
         document.getElementById('q-text').innerText = questions[qIdx].q;
-        document.getElementById('hint-display').style.display = 'none';
+        document.getElementById('hint-display').innerHTML = `<img src="${questions[qIdx].rel}" style="width:80%; border-radius:15px; border:2px solid #ddd;">`;
         speakQuestion();
     }
 
@@ -218,17 +202,9 @@
         msg.lang = 'zh-HK'; speechSynthesis.speak(msg);
     }
 
-    function toggleHint(type) {
-        const div = document.getElementById('hint-display');
-        div.style.display = 'block'; div.innerHTML = '';
-        if(type==='full') storyImgs.forEach(s => div.innerHTML += `<img src="${s}" style="width:45%; margin:2px; border-radius:8px; border:1px solid #ddd;">`);
-        else if(type==='relevant') div.innerHTML = `<img src="${questions[qIdx].rel}" style="width:90%; border-radius:10px;">`;
-        else div.innerHTML = `<img src="${questions[qIdx].hint}" style="width:90%; border-radius:10px;">`;
-    }
-
     function nextQuestion() {
         if(qIdx < 5) { qIdx++; updateQuiz(); }
-        else { confetti(); }
+        else { playSuccessEffect(); }
     }
 
     // --- Level 3 ---
@@ -240,55 +216,30 @@
         ['consequence.png', 'reaction.png']
     ];
 
-    function initLevel3() {
-        tIdx = 0; grammarStatus = [[],[],[],[]];
-        document.getElementById('teller-main').classList.remove('hidden');
-        document.getElementById('teller-result').classList.add('hidden');
-        renderTeller();
-    }
-
     function renderTeller() {
         document.getElementById('teller-img').src = storyImgs[tIdx];
-        const area = document.getElementById('grammar-area');
-        area.innerHTML = '';
-        
+        const area = document.getElementById('grammar-area'); area.innerHTML = '';
         grammarConfig[tIdx].forEach(icon => {
-            const card = document.createElement('div');
-            card.className = 'grammar-card';
+            const card = document.createElement('div'); card.className = 'grammar-card';
             if(grammarStatus[tIdx].includes(icon)) card.classList.add('checked');
             card.innerHTML = `<img src="${icon}">`;
-            card.onclick = (e) => {
+            card.onclick = () => {
                 card.classList.toggle('checked');
-                if(card.classList.contains('checked')) {
-                    if(!grammarStatus[tIdx].includes(icon)) grammarStatus[tIdx].push(icon);
-                } else {
-                    grammarStatus[tIdx] = grammarStatus[tIdx].filter(i => i !== icon);
-                }
+                if(card.classList.contains('checked')) grammarStatus[tIdx].push(icon);
+                else grammarStatus[tIdx] = grammarStatus[tIdx].filter(i => i !== icon);
             };
             area.appendChild(card);
         });
         document.querySelectorAll('.marker-star').forEach(s => s.remove());
     }
 
-    function toggleEraser() {
-        isEraserMode = !isEraserMode;
-        document.getElementById('eraser').classList.toggle('eraser-active', isEraserMode);
-    }
-
     function handleCanvasClick(e) {
-        if(isEraserMode) return;
         const rect = e.currentTarget.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
         const star = document.createElement('div');
         star.className = 'marker-star'; star.innerText = '⭐';
-        star.style.left = x + '%'; star.style.top = y + '%';
-        star.onclick = (ev) => {
-            if(isEraserMode) {
-                ev.stopPropagation();
-                star.remove();
-            }
-        };
+        star.style.left = ((e.clientX - rect.left) / rect.width) * 100 + '%';
+        star.style.top = ((e.clientY - rect.top) / rect.height) * 100 + '%';
+        star.onclick = (ev) => { ev.stopPropagation(); star.remove(); };
         e.currentTarget.appendChild(star);
     }
 
@@ -296,7 +247,7 @@
         if(tIdx < 3) { tIdx++; renderTeller(); }
         else { 
             if(mediaRecorder && mediaRecorder.state === "recording") stopAndSave();
-            confetti(); showResultPage(); 
+            playSuccessEffect(); showResultPage(); 
         }
     }
 
@@ -307,68 +258,56 @@
         storyImgs.forEach((src, i) => {
             let iconsHtml = grammarConfig[i].map(icon => {
                 const isChecked = grammarStatus[i].includes(icon);
-                return `<div class="grammar-card ${isChecked?'':'grey'}" style="width:50px; height:50px; margin:2px;"><img src="${icon}"></div>`;
+                return `<div class="grammar-card ${isChecked?'':'grey'}" style="width:45px; height:45px; margin:2px;"><img src="${icon}"></div>`;
             }).join('');
-            // Added icons-container for horizontal alignment
-            list.innerHTML += `<div class="result-row"><img src="${src}" class="thumb"><div class="result-icons-container">${iconsHtml}</div></div>`;
+            list.innerHTML += `<div class="result-row"><img src="${src}" class="thumb"><div>${iconsHtml}</div></div>`;
         });
     }
 
-    // --- Recording Fix for Safari ---
-    let mediaRecorder; let audioChunks = []; let audioUrl;
+    // --- Recording & Sharing ---
+    let mediaRecorder; let audioChunks = []; let audioBlob;
     async function toggleGlobalRecord() {
         const btn = document.getElementById('rec-status');
         if(!mediaRecorder || mediaRecorder.state === "inactive") {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                
-                // Safari-compatible MIME type check
-                let options = { mimeType: 'audio/webm' };
-                if (!MediaRecorder.isTypeSupported('audio/webm')) {
-                    options = { mimeType: 'audio/mp4' }; // Fallback for iOS/Safari
-                }
-                
-                mediaRecorder = new MediaRecorder(stream, options);
+                mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
-                mediaRecorder.ondataavailable = e => { if(e.data.size > 0) audioChunks.push(e.data); };
-                mediaRecorder.start(1000); 
+                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                mediaRecorder.start();
                 btn.innerText = "⏹️ 停止錄音"; btn.classList.add('recording-active');
-            } catch(e) { alert("無法啟動錄音，請確保在 HTTPS 環境下並開啟麥克風權限。"); }
+            } catch(e) { alert("請確保開啟麥克風權限。"); }
         } else {
             stopAndSave();
-            btn.innerText = "✅ 錄音完成 (可聽回)"; btn.classList.remove('recording-active');
+            btn.innerText = "✅ 錄音完成"; btn.classList.remove('recording-active');
         }
     }
 
     function stopAndSave() {
-        if(mediaRecorder && mediaRecorder.state !== "inactive") {
+        if(mediaRecorder) {
             mediaRecorder.stop();
-            mediaRecorder.onstop = () => {
-                const blobType = mediaRecorder.mimeType || 'audio/mp4';
-                const blob = new Blob(audioChunks, { type: blobType });
-                audioUrl = URL.createObjectURL(blob);
-            };
+            mediaRecorder.onstop = () => { audioBlob = new Blob(audioChunks, { type: 'audio/m4a' }); };
         }
     }
 
     function playGlobalRecord() {
-        if(audioUrl) {
-            const audio = new Audio();
-            audio.src = audioUrl;
-            // Safari workaround: explicitly load and play
-            audio.load();
-            audio.play().catch(e => {
-                console.error("Play failed", e);
-                alert("播放失敗，請檢查設備靜音開關。");
-            });
-        } else { alert("未有錄音存檔。"); }
+        if(audioBlob) { new Audio(URL.createObjectURL(audioBlob)).play(); }
+        else alert("尚未有錄音。");
+    }
+
+    async function exportRecording() {
+        if (!audioBlob) { alert("請先完成錄音！"); return; }
+        const file = new File([audioBlob], "story.m4a", { type: "audio/m4a" });
+        if (navigator.share) {
+            await navigator.share({ files: [file], title: '故事錄音' });
+        } else { alert("瀏覽器不支持分享，請手動儲存。"); }
     }
 
     function showLevel(lvl) {
         document.querySelectorAll('.game-container').forEach(el => el.classList.add('hidden'));
         document.getElementById('level'+lvl).classList.remove('hidden');
         document.querySelectorAll('.level-btn').forEach((b,i)=>b.classList.toggle('active-level', i===lvl-1));
-        if(lvl===1) initLevel1(); if(lvl===2) updateQuiz(); if(lvl===3) initLevel3();
+        if(lvl===1) initLevel1(); if(lvl===2) updateQuiz(); if(lvl===3) { tIdx=0; renderTeller(); }
     }
     window.onload = () => initLevel1();
 </script>
