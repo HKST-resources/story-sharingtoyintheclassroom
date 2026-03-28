@@ -1,353 +1,1524 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>互動故事-在課室分享積木2</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <style>
-        :root {
-            --primary: #FFD93D; --secondary: #6BCB77; --accent: #FF6B6B;
-            --blue-3d: #0CC0DF;
-            --orange-3d: linear-gradient(145deg, #fa8231, #e67e22);
-            --share-blue: linear-gradient(145deg, #3498db, #2980b9);
-            --bg: #F0F7FF;
-        }
-
-        body { font-family: "Microsoft JhengHei", sans-serif; background-color: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; }
-        header { background: var(--primary); width: 100%; padding: 15px 0; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        header h1 { color: white; margin: 0; font-size: 1.8rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
-        
-        .nav-buttons { margin: 15px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        button { padding: 12px 20px; font-size: 1rem; border: none; border-radius: 25px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .level-btn { background: white; border: 2px solid var(--secondary); color: #333; }
-        .active-level { background: var(--secondary); color: white; box-shadow: 0 4px 0px #4e9a56; }
-
-        /* Game Container */
-        .game-container { width: 95%; max-width: 1000px; background: white; padding: 30px; border-radius: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); margin-bottom: 25px; box-sizing: border-box; }
-        .instruction { background: #E1F5FE; padding: 15px; border-radius: 12px; font-size: 1rem; color: #01579B; margin-bottom: 20px; border-left: 6px solid #03A9F4; line-height: 1.6; }
-
-        /* Level 1: Fixed Layout */
-        .level1-content { display: flex; flex-direction: column; align-items: center; width: 100%; }
-        .grid-layout { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; width: 100%; max-width: 800px; margin: 20px 0; }
-        @media (max-width: 600px) { .grid-layout { grid-template-columns: repeat(2, 2fr); } }
-        .drop-zone { width: 100%; aspect-ratio: 1/1; border: 3px dashed #ccc; border-radius: 15px; position: relative; background: #fafafa; display: flex; align-items: center; justify-content: center; }
-        .img-card { width: 100%; height: 100%; object-fit: cover; cursor: pointer; border-radius: 12px; }
-        .wrong-tag { position: absolute; top: -8px; right: -8px; font-size: 38px; background: white; border-radius: 50%; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(255,0,0,0.4); z-index: 10; border: 3px solid red; color: red; font-weight: 900; }
-
-        /* Level 2 */
-        .audio-btn-3d { width: 90px; height: 90px; border-radius: 50%; background: var(--blue-3d); margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 0 #0a9cb5; cursor: pointer; border: none; color: white; font-size: 40px; }
-        .hint-group { display: flex; flex-direction: column; gap: 12px; }
-        .h-btn { padding: 18px; border-radius: 15px; color: white; text-align: left; font-size: 1.1rem; border: none; }
-        .h-btn-1 { background: #4b7bec; } .h-btn-2 { background: #20bf6b; } .h-btn-3 { background: #eb3b5a; }
-        .hint-box { display: none; margin-top: 10px; text-align: center; border: 2px solid #eee; border-radius: 15px; padding: 15px; }
-        .hint-box img { width: 100%; max-width: 500px; border-radius: 10px; }
-
-        /* Level 3: Right Bar Layout */
-        .story-teller-wrapper { display: flex; flex-direction: row; gap: 20px; align-items: stretch; justify-content: center; }
-        .big-img-container { position: relative; flex: 1; border-radius: 15px; border: 4px solid #eee; overflow: hidden; touch-action: none; background: #f9f9f9; max-height: 500px; }
-        .marker-star { position: absolute; font-size: 60px; transform: translate(-50%, -50%); cursor: pointer; z-index: 20; opacity: 0.7; }
-        
-        .right-bar { width: 120px; display: flex; flex-direction: column; justify-content: space-between; }
-        .brush-btn { width: 70px; height: 70px; background: white; border: 4px solid #eb3b5a; border-radius: 12px; font-size: 35px; cursor: pointer; display: flex; align-items: center; justify-content: center; align-self: center; }
-        .brush-active { background: #ffeaea; box-shadow: 0 0 15px red; }
-        .grammar-stack { display: flex; flex-direction: column; gap: 10px; align-items: center; }
-        .grammar-card { width: 100px; height: 100px; border: 3px solid #eee; border-radius: 15px; background: white; cursor: pointer; position: relative; }
-        .grammar-card img { width: 100%; height: 100%; object-fit: contain; }
-        .grammar-card.checked::after { content: '✔️'; position: absolute; inset: 0; background: rgba(107, 203, 119, 0.7); display: flex; align-items: center; justify-content: center; font-size: 45px; color: white; border-radius: 12px; }
-
-        /* Result Summary Table */
-        .result-row { display: flex; flex-direction: row; align-items: center; gap: 30px; padding: 20px 0; border-bottom: 2px solid #f0f0f0; }
-        .res-img { width: 220px; border-radius: 15px; flex-shrink: 0; }
-        .res-grammars { display: flex; flex-direction: row; gap: 12px; flex-wrap: wrap; }
-        .res-icon { width: 180px; height: 180px; border-radius: 12px; border: 2px solid #ddd; } /* Enlarged as requested */
-        @media (max-width: 800px) { .res-icon { width: 80px; height: 80px; } }
-        .res-icon.grey { filter: grayscale(1); opacity: 0.1; }
-
-        /* Result Buttons */
-        .btn-large { width: 100%; padding: 20px; border-radius: 20px; color: white; font-size: 1.3rem; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 12px; border: none; }
-        .btn-playback { background: var(--blue-3d); box-shadow: 0 5px 0 #0a9cb5; }
-        .action-row { display: flex; gap: 15px; width: 100%; }
-        .btn-half { flex: 1; padding: 18px; border-radius: 20px; color: white; font-size: 1.1rem; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; }
-        .btn-share { background: var(--share-blue); }
-        .btn-export { background: #fa8231; }
-
-        .recording-bar { width: 100%; background: #ff4757; color: white; padding: 18px; border-radius: 20px; text-align: center; font-weight: bold; cursor: pointer; margin-bottom: 20px; font-size: 1.2rem; }
-        .recording-active { background: #c0392b; animation: pulse 1.5s infinite; }
-        .hidden { display: none; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-    </style>
-</head>
-<body>
-
-<header><h1>互動故事 - 在課室分享玩具</h1></header>
-
-<div class="nav-buttons">
-    <button class="level-btn active-level" onclick="showLevel(1)">1. 排列次序</button>
-    <button class="level-btn" onclick="showLevel(2)">2. 故事理解</button>
-    <button class="level-btn" onclick="showLevel(3)">3. 我識講故事</button>
-</div>
-
-<div id="level1" class="game-container">
-    <div class="instruction">家長指南：請點擊下方的圖片。圖片會按點擊順序填入上方的空格。再次點擊空格圖片可撤回。</div>
-    <div class="level1-content">
-        <div class="grid-layout" id="seq-box">
-            <div class="drop-zone" id="z0"></div><div class="drop-zone" id="z1"></div>
-            <div class="drop-zone" id="z2"></div><div class="drop-zone" id="z3"></div>
-        </div>
-        <div class="grid-layout" id="shuffle-box"></div>
-        <button onclick="checkLevel1()" style="background:var(--accent); color:white; width:220px; margin-top:20px; font-size:1.2rem;">完成 ✅</button>
-    </div>
-</div>
-
-<div id="level2" class="game-container hidden">
-    <div class="instruction">家長指南：點擊藍色喇叭播放問題，如孩子未能回答，可由上至下點擊提示。</div>
-    <button class="audio-btn-3d" onclick="speakQuestion()">📢</button>
-    <h3 id="q-text" style="text-align:center; min-height:1.2em; font-size:1.5rem;"></h3>
-    
-    <div class="hint-group">
-        <button class="h-btn h-btn-1" onclick="toggleHint(1)">💡 最少提示：再看一次完整故事</button>
-        <div id="hint1" class="hint-box"><div class="grid-layout" id="hint-all-grid" style="margin:0 auto;"></div></div>
-        
-        <button class="h-btn h-btn-2" onclick="toggleHint(2)">🔍 中等提示：只看最相關的圖咭</button>
-        <div id="hint2" class="hint-box"><img id="hint-rel-img" src=""></div>
-        
-        <button class="h-btn h-btn-3" onclick="toggleHint(3)">⭕ 最多提示：圈出線索</button>
-        <div id="hint3" class="hint-box"><img id="hint-clue-img" src=""></div>
-    </div>
-    <div style="text-align:center; margin-top:30px;"><button onclick="nextQuestion()" style="background:var(--secondary); color:white; width:180px; font-size:1.1rem;">下一題 ⭐</button></div>
-</div>
-
-<div id="level3" class="game-container hidden">
-    <div id="teller-main">
-        <div class="instruction">家長指南：點擊紅色錄音。點擊圖片放置星號（點擊🧹後點選星號刪除），說完對應故事元素後請點擊圖標打勾。</div>
-        <div id="rec-status" class="recording-bar" onclick="toggleGlobalRecord()">⏺️ 開始全程錄音</div>
-        
-        <div class="story-teller-wrapper">
-            <div class="big-img-container" id="canvas-3" onclick="handleCanvasClick(event)">
-                <img id="teller-img" style="width:100%; display:block; pointer-events:none;">
-            </div>
-            
-            <div class="right-bar">
-                <button class="brush-btn" id="brush-tool" onclick="toggleBrush()">🧹</button>
-                <div class="grammar-stack" id="grammar-area"></div>
-            </div>
-        </div>
-        <button onclick="tellerNext()" style="width:100%; background:var(--primary); margin-top:25px; font-size:1.4rem; height:60px;">下一頁 ➡️</button>
-    </div>
-
-    <div id="teller-result" class="hidden">
-        <button onclick="playGlobalRecord()" class="btn-large btn-playback">▶️ 重聽故事</button>
-        
-        <div id="export-area">
-            <h2 style="text-align:center; color:#333;">我的故事總結</h2>
-            <div id="summary-list"></div>
-        </div>
-
-        <div style="margin-top:25px;">
-            <div class="action-row">
-                <button onclick="exportRecording()" class="btn-half btn-share" id="btn-share-rec">📞📲 分享錄音</button>
-                <button onclick="captureScreen()" class="btn-half btn-export" id="btn-export-img">💾 匯出結果</button>
-            </div>
-            <button onclick="location.reload()" style="width:100%; background:#f0f0f0; padding:15px; border-radius:20px; margin-top:15px; font-weight:bold; color:#666; border:none;">重新開始</button>
-        </div>
-    </div>
-</div>
-
-<script>
-    const storyImgs = ['story1-1.png', 'story1-2.png', 'story1-3.png', 'story1-4.png'];
-    let currentSeq = [null, null, null, null];
-    let grammarStatus = [[], [], [], []];
-    let isBrushActive = false;
-    const hooraySound = new Audio('hooray.mp3');
-
-    // --- Level 1 ---
-    function initLevel1() {
-        const sBox = document.getElementById('shuffle-box');
-        sBox.innerHTML = ''; currentSeq = [null, null, null, null];
-        renderSequence();
-        [...storyImgs].sort(()=>Math.random()-0.5).forEach(src => {
-            const img = document.createElement('img'); img.src = src; img.className = 'img-card';
-            img.onclick = () => {
-                const idx = currentSeq.indexOf(null);
-                if(idx!==-1) { currentSeq[idx]=src; img.style.visibility='hidden'; renderSequence(); }
-            };
-            sBox.appendChild(img);
-        });
-    }
-    function renderSequence() {
-        for(let i=0; i<4; i++) {
-            const zone = document.getElementById('z'+i); zone.innerHTML = '';
-            if(currentSeq[i]) {
-                const img = document.createElement('img'); img.src = currentSeq[i]; img.className = 'img-card';
-                const remove = () => {
-                    const src = currentSeq[i]; currentSeq[i]=null;
-                    document.querySelectorAll('#shuffle-box img').forEach(si => {if(si.src.includes(src)) si.style.visibility='visible'});
-                    zone.dataset.checked="false"; renderSequence();
-                };
-                img.onclick = remove; zone.appendChild(img);
-                if(zone.dataset.checked==="true" && currentSeq[i]!==storyImgs[i]) {
-                    const tag = document.createElement('div'); tag.className='wrong-tag'; tag.innerText='?';
-                    tag.onclick = remove; zone.appendChild(tag);
-                }
-            }
-        }
-    }
-    function checkLevel1() {
-        let allOk = true;
-        for(let i=0; i<4; i++) {
-            const z = document.getElementById('z'+i); z.dataset.checked="true";
-            if(currentSeq[i]!==storyImgs[i]) allOk=false;
-        }
-        renderSequence();
-        if(allOk && !currentSeq.includes(null)) { confetti(); hooraySound.play(); }
+<!doctype html>
+<html lang="zh-HK">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>故事學習遊戲 - Story Learning Game</title>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://cdn.tailwindcss.com/3.4.17" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
 
-    // --- Level 2 ---
-    let qIdx = 0;
+    html, body {
+      height: 100%;
+      width: 100%;
+    }
+
+    body {
+      font-family: 'Microsoft JhengHei', 'Arial', sans-serif;
+      background: #FFFBEB;
+      overflow: hidden;
+    }
+
+    .app-container {
+      height: 100%;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      background: #FFFBEB;
+    }
+
+    /* Level 1 Styles */
+    .sequence-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .sequence-slot {
+      aspect-ratio: 1;
+      border: 3px dashed #72D6FF;
+      border-radius: 15px;
+      background: rgba(255, 255, 255, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-height: 80px;
+      overflow: hidden;
+    }
+
+    .sequence-slot:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .sequence-slot.filled {
+      border: 3px solid #9CD867;
+      background: rgba(156, 216, 103, 0.1);
+    }
+
+    .sequence-number {
+      position: absolute;
+      top: 5px;
+      left: 8px;
+      background: #FFD93B;
+      color: #333;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 16px;
+      z-index: 2;
+    }
+
+    .story-card {
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      width: 100%;
+      height: 100%;
+      flex-shrink: 0;
+    }
+
+    .story-card:hover {
+      transform: scale(1.08);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .story-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .shuffle-box {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      padding: 1.5rem;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      margin-top: 1.5rem;
+      justify-content: start;
+      overflow-x: auto;
+      max-width: 100%;
+    }
+
+    .shuffle-grid-slot {
+      width: 100%;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .error-indicator {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      font-size: 2rem;
+      z-index: 10;
+      display: none;
+    }
+
+    .error-indicator.show {
+      display: block;
+    }
+
+    /* Level 2 Styles */
+    .question-card {
+      background: white;
+      border-radius: 15px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .question-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .audio-btn {
+      background: linear-gradient(135deg, #FFA99D 0%, #FFB8A8 100%);
+      color: #333;
+      border: none;
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      transition: transform 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .audio-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .hint-buttons {
+      display: flex;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    .hint-btn {
+      background: linear-gradient(135deg, #FFD93B 0%, #FFE68B 100%);
+      border: none;
+      padding: 0.6rem 1rem;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+      color: #333;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .hint-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .hint-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1rem;
+    }
+
+    .hint-modal {
+      background: white;
+      border-radius: 20px;
+      padding: 2rem;
+      max-width: 90vw;
+      max-height: 85vh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .hint-image {
+      max-width: 100%;
+      height: auto;
+      border-radius: 15px;
+      margin-bottom: 1.5rem;
+    }
+
+    .close-hint-btn {
+      background: linear-gradient(135deg, #72D6FF 0%, #A4E7FF 100%);
+      color: #333;
+      border: none;
+      padding: 0.8rem 2rem;
+      border-radius: 25px;
+      cursor: pointer;
+      font-weight: bold;
+      width: 100%;
+    }
+
+    /* Level 3 Styles */
+    .level3-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      height: 100%;
+      padding: 0;
+    }
+
+    .story-picture-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 1.5rem;
+      padding-bottom: 0;
+    }
+
+    .story-picture-wrapper {
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      background: white;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      width: 400px;
+      height: 400px;
+      margin: 0 auto;
+      flex-shrink: 0;
+    }
+
+    .story-picture {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      cursor: crosshair;
+      display: block;
+      user-select: none;
+    }
+
+    .star-marker {
+      position: absolute;
+      font-size: 3rem;
+      cursor: pointer;
+      user-select: none;
+      animation: popIn 0.4s ease;
+      pointer-events: auto;
+      line-height: 1;
+    }
+
+    @keyframes popIn {
+      0% {
+        transform: scale(0);
+      }
+      50% {
+        transform: scale(1.2);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .grammar-cues {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      padding: 1.5rem;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      justify-items: center;
+      align-items: center;
+    }
+
+    .grammar-cue {
+      width: 150px;
+      height: 150px;
+      border: none;
+      border-radius: 15px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .grammar-cue:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .grammar-cue img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 0.5rem;
+    }
+
+    .grammar-cue.selected {
+      border: 3px solid #9CD867;
+      background: linear-gradient(135deg, rgba(156, 216, 103, 0.2) 0%, rgba(156, 216, 103, 0.1) 100%);
+      box-shadow: 0 4px 12px rgba(156, 216, 103, 0.3);
+    }
+
+    .tick-mark {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #9CD867;
+      color: white;
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: bold;
+      animation: popIn 0.3s ease;
+    }
+
+    /* Common Button Styles */
+    .btn {
+      padding: 0.8rem 2rem;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #9CD867 0%, #A8E078 100%);
+      color: #333;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #FFD93B 0%, #FFE68B 100%);
+      color: #333;
+    }
+
+    .btn-secondary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Navigation */
+    .level-nav {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      padding: 1.5rem;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      margin-bottom: 1.5rem;
+    }
+
+    .level-btn {
+      padding: 0.8rem 1.5rem;
+      border: 3px solid #72D6FF;
+      background: white;
+      border-radius: 15px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      font-size: 14px;
+    }
+
+    .level-btn.active {
+      background: linear-gradient(135deg, #72D6FF 0%, #A4E7FF 100%);
+      color: #333;
+      transform: scale(1.05);
+    }
+
+    .level-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    /* Celebration */
+    .celebration-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      pointer-events: none;
+    }
+
+    .trophy-celebration {
+      font-size: 6rem;
+      animation: trophyBounce 1s ease-out, trophySpin 1.2s ease-in-out;
+      filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+    }
+
+    .confetti-piece {
+      position: fixed;
+      pointer-events: none;
+      font-size: 2rem;
+      z-index: 999;
+    }
+
+    @keyframes confettiFall {
+      0% {
+        transform: translateY(-100px) rotateZ(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100vh) rotateZ(720deg);
+        opacity: 0;
+      }
+    }
+
+    .confetti-falling {
+      animation: confettiFall 3s ease-in forwards;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #72D6FF 0%, #9CD867 100%);
+      color: white;
+      padding: 1.2rem;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      border-bottom: none;
+    }
+
+    .header h1 {
+      font-size: 1.4rem;
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-shadow: none;
+    }
+
+    /* Results Summary */
+    .results-summary {
+      background: white;
+      border-radius: 20px;
+      padding: 2rem;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .result-item {
+      margin-bottom: 2rem;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 1.5rem;
+    }
+
+    .result-item:last-child {
+      border-bottom: none;
+    }
+
+    .result-picture {
+      width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+      margin-bottom: 1rem;
+      border-radius: 15px;
+    }
+
+    .cue-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 1rem;
+    }
+
+    .cue-summary-item {
+      aspect-ratio: 1;
+      border-radius: 15px;
+      overflow: hidden;
+      opacity: 0.4;
+      filter: grayscale(100%);
+    }
+
+    .cue-summary-item.ticked {
+      opacity: 1;
+      filter: grayscale(0%);
+      border: 3px solid #9CD867;
+      box-shadow: 0 4px 12px rgba(156, 216, 103, 0.3);
+    }
+
+    .cue-summary-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 0.5rem;
+    }
+
+    /* Layout Adjustments */
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 1.4rem;
+      }
+
+      .sequence-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.8rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .shuffle-box {
+        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+        gap: 0.8rem;
+        padding: 1rem;
+      }
+
+      .grammar-cues {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 0.8rem;
+        padding: 1rem;
+      }
+
+      .level-nav {
+        gap: 0.5rem;
+        padding: 1rem;
+      }
+
+      .level-btn {
+        padding: 0.6rem 1rem;
+        font-size: 12px;
+      }
+    }
+
+    .content-section {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 1.5rem;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .instruction-bar {
+      background: linear-gradient(135deg, #E0F7FF 0%, #F0F9FF 100%);
+      border-left: 4px solid #72D6FF;
+      padding: 1rem 1.5rem;
+      border-radius: 10px;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+      color: #333;
+      line-height: 1.6;
+      box-shadow: 0 2px 8px rgba(114, 214, 255, 0.15);
+    }
+
+    .instruction-bar strong {
+      color: #2c5aa0;
+    }
+
+    .story-example {
+      background: white;
+      border-radius: 15px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      line-height: 1.8;
+      font-size: 1rem;
+      color: #333;
+    }
+
+    .story-example-title {
+      font-weight: bold;
+      color: #667eea;
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+    }
+
+    .story-key {
+      color: #ef4444;
+      font-weight: bold;
+    }
+
+    .remarks-input {
+      width: 100%;
+      min-height: 80px;
+      padding: 0.8rem;
+      border: 2px solid #72D6FF;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+
+    .remarks-label {
+      font-weight: bold;
+      color: #667eea;
+      margin-bottom: 0.5rem;
+      display: block;
+      font-size: 0.9rem;
+    }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="https://cdn.tailwindcss.com/3.4.17" type="text/javascript"></script>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="app-container"><!-- Header -->
+   <div class="header">
+    <h1>故事學習活動 - 在課室分享玩具</h1>
+   </div><!-- Level Navigation -->
+   <div class="level-nav"><button class="level-btn active" onclick="switchLevel(1)"> <span style="font-size: 1.2rem;">1️⃣</span> 排列故事 </button> <button class="level-btn" onclick="switchLevel(2)"> <span style="font-size: 1.2rem;">2️⃣</span> 故事理解 </button> <button class="level-btn" onclick="switchLevel(3)"> <span style="font-size: 1.2rem;">3️⃣</span> 說故事 </button> <button class="level-btn" id="resultsBtn" style="display: none;" onclick="switchLevel(4)"> <span style="font-size: 1.2rem;">📊</span> 結果 </button>
+   </div><!-- Content Section -->
+   <div class="content-section"><!-- Level 1: Story Sequencing -->
+    <div id="level1" class="level-content">
+     <div class="instruction-bar"><strong>💡 第一關 - 排列故事：</strong> 按照正確的順序，將 4 張圖片排列好。幫助孩子理解故事的發展先後。
+     </div>
+     <div style="background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 1.5rem; margin-bottom: 1.5rem;">
+      <div class="sequence-grid" id="sequenceGrid">
+       <div class="sequence-slot" data-position="1"><span class="sequence-number">1</span>
+       </div>
+       <div class="sequence-slot" data-position="2"><span class="sequence-number">2</span>
+       </div>
+       <div class="sequence-slot" data-position="3"><span class="sequence-number">3</span>
+       </div>
+       <div class="sequence-slot" data-position="4"><span class="sequence-number">4</span>
+       </div>
+      </div>
+     </div>
+     <div class="shuffle-box" id="shuffleBox"><!-- Story cards will be dynamically added here -->
+     </div>
+     <div class="btn-group"><button class="btn btn-primary" onclick="checkSequence()">✓ 完成</button> <button class="btn btn-secondary" onclick="resetLevel1()">↻ 重新開始</button>
+     </div>
+    </div><!-- Level 2: Story Comprehension -->
+    <div id="level2" class="level-content hidden">
+     <div class="instruction-bar"><strong>💡 第二關 - 故事理解：</strong> 回答有關故事的問題，選擇需要的提示幫助。鼓勵孩子思考故事發生的細節。
+     </div>
+     <div style="background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 1.5rem;">
+      <div id="questionsContainer"><!-- Questions will be dynamically added here -->
+      </div>
+     </div>
+    </div><!-- Level 3: Story Telling -->
+    <div id="level3" class="level-content hidden">
+     <div class="level3-container">
+      <div style="padding: 1.5rem; padding-bottom: 0;">
+       <div class="instruction-bar"><strong>💡 第三關 - 說故事：</strong> 點擊圖片可放置星號來標記重要細節，亦可使用下方故事文法圖咭以引導思考故事架構。如能說出該故事文法，請點擊打勾。
+       </div>
+      </div>
+      <div class="story-picture-section">
+       <div class="story-picture-wrapper" id="storyPictureWrapper"><img id="storyPicture" class="story-picture" src="" alt="Story picture">
+       </div>
+       <div id="grammarCuesContainer" class="grammar-cues"><!-- Grammar cues will be dynamically added here -->
+       </div>
+      </div>
+      <div class="btn-group"><button class="btn btn-secondary" onclick="previousStoryPicture()">← 上一張</button> <button class="btn btn-primary" onclick="nextStoryPicture()">下一張 →</button>
+      </div>
+     </div>
+    </div><!-- Level 4: Results -->
+    <div id="level4" class="level-content hidden">
+     <div style="background: rgba(255, 255, 255, 0.95); border-radius: 20px; padding: 1.5rem;">
+      <h2 style="text-align: center; color: #667eea; margin-bottom: 2rem; font-size: 1.8rem;">🎉 故事總結</h2>
+      <div id="resultsContainer" style="margin-bottom: 2rem;"></div>
+      <div class="btn-group">
+       <button class="btn btn-secondary" onclick="exportResults()">💾 保存截圖</button> <button class="btn btn-primary" onclick="switchLevel(1)">回到主頁面</button>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div><!-- Hint Modal -->
+  <div id="hintModal" class="hint-modal-overlay hidden" onclick="closeHintIfBackdrop(event)">
+   <div class="hint-modal" onclick="event.stopPropagation()">
+    <div id="hintContent"></div><button class="close-hint-btn" onclick="closeHint()">關閉</button>
+   </div>
+  </div>
+  <script>
+    // Story data
+    const storyCards = [
+      { id: 1, url: 'https://github.com/HKST-resources/story-sharingtoyintheclassroom/blob/main/story1-1.png?raw=true' },
+      { id: 2, url: 'https://github.com/HKST-resources/story-sharingtoyintheclassroom/blob/main/story1-2.png?raw=true' },
+      { id: 3, url: 'https://github.com/HKST-resources/story-sharingtoyintheclassroom/blob/main/story1-3.png?raw=true' },
+      { id: 4, url: 'https://github.com/HKST-resources/story-sharingtoyintheclassroom/blob/main/story1-4.png?raw=true' }
+    ];
+
     const questions = [
-        { q: "1. 一開始，邊個玩積木？", rel: "story1-1.png", clue: "story1-q1-hint.png" },
-        { q: "2. 男仔喺邊度玩積木?", rel: "story1-1.png", clue: "story1-q2-hint.png" },
-        { q: "3. 女仔想同男仔一齊做咩？", rel: "story1-2.png", clue: "story1-q3-hint.png" },
-        { q: "4. 男仔有無同個女仔分享？", rel: "story1-3.png", clue: "story1-q4-hint.png" },
-        { q: "5. 點解老師會俾手指公佢哋？", rel: "story1-4.png", clue: "story1-q5-hint.png" },
-        { q: "6. 玩完積木之後，佢哋應該要做咩？", rel: "story1-1.png", clue: "story1-q6-hint.png" }
-    ];
-    function updateQuiz() {
-        const item = questions[qIdx];
-        document.getElementById('q-text').innerText = item.q;
-        document.getElementById('hint-rel-img').src = item.rel;
-        document.getElementById('hint-clue-img').src = item.clue;
-        const grid = document.getElementById('hint-all-grid'); grid.innerHTML = '';
-        storyImgs.forEach(s => grid.innerHTML += `<img src="${s}" style="width:100%; border-radius:8px;">`);
-        document.querySelectorAll('.hint-box').forEach(b => b.style.display='none');
-    }
-    function toggleHint(n) {
-        const b = document.getElementById('hint'+n);
-        b.style.display = b.style.display === 'block' ? 'none' : 'block';
-    }
-    function speakQuestion() {
-        // 提取問題文本（移除編號）
-        const fullText = questions[qIdx].q;
-        const textToSpeak = fullText.substring(fullText.indexOf(" ") + 1);
-        const msg = new SpeechSynthesisUtterance(textToSpeak);
-        msg.lang = 'zh-HK'; 
-        msg.rate = 0.9; // 稍微慢一點方便理解
-        speechSynthesis.speak(msg);
-    }
-    function nextQuestion() {
-        if(qIdx < 5) { qIdx++; updateQuiz(); } else { confetti(); hooraySound.play(); }
-    }
-
-    // --- Level 3 ---
-    let tIdx = 0;
-    const grammarConfig = [
-        ['when.png','who.png','where.png','what.png'],
-        ['initiating-event.png'],
-        ['attempt.png'],
-        ['consequence.png','reaction.png']
+      {
+        id: 1,
+        text: '一開始，邊個玩積木？',
+        middle: 1,
+        most: 'https://github.com/HKST-resources/story-sharingtoyintheclassroom/blob/main/story1-q1-hint.png?raw=true'
+      },
+      {
+        id: 2,
+        text: '男仔喺邊度玩積木?',
+        middle: 1,
+        most: 'https://github.com/HKST-resources/story-sharingtoyintheclassroom/blob/main/story1-q2-hint.png?raw=true'
+      },
+      {
+        id: 3,
+        text: '女仔想同男仔一齊做咩呀？',
+        middle: 2,
+        most: 'https://github.com/HKST-resources/story-sharingtoyintheclassroom/blob/main/story1-q3-hint.png?raw=true'
+      },
+      {
+        id: 4,
+        text: '男仔有無同個女仔分享？',
+        middle: 3,
+        most: 'https://github.com/HKST-resources/story-sharingtoyintheclassroom/blob/main/story1-q4-hint.png?raw=true'
+      },
+      {
+        id: 5,
+        text: '點解老師會俾手指公佢哋？',
+        middle: 4,
+        most: 'https://github.com/HKST-resources/story-sharingtoyintheclassroom/blob/main/story1-q5-hint.png?raw=true'
+      },
+      {
+        id: 6,
+        text: '玩完積木之後，佢哋應該要做咩呀？',
+        middle: 1,
+        most: 'https://github.com/HKST-resources/story-sharingtoyintheclassroom/blob/main/story1-q6-hint.png?raw=true'
+      }
     ];
 
-    function renderTeller() {
-        document.getElementById('teller-img').src = storyImgs[tIdx];
-        const area = document.getElementById('grammar-area'); area.innerHTML = '';
-        grammarConfig[tIdx].forEach(icon => {
-            const card = document.createElement('div'); card.className = 'grammar-card';
-            if(grammarStatus[tIdx].includes(icon)) card.classList.add('checked');
-            card.innerHTML = `<img src="${icon}">`;
-            card.onclick = () => {
-                card.classList.toggle('checked');
-                if(card.classList.contains('checked')) grammarStatus[tIdx].push(icon);
-                else grammarStatus[tIdx] = grammarStatus[tIdx].filter(i=>i!==icon);
-            };
-            area.appendChild(card);
-        });
-        document.querySelectorAll('.marker-star').forEach(s => s.remove());
-    }
-    function toggleBrush() {
-        isBrushActive = !isBrushActive;
-        document.getElementById('brush-tool').classList.toggle('brush-active', isBrushActive);
-    }
-    function handleCanvasClick(e) {
-        if(isBrushActive) return;
-        const rect = e.currentTarget.getBoundingClientRect();
-        const star = document.createElement('div'); star.className = 'marker-star'; star.innerText = '⭐';
-        star.style.left = ((e.clientX - rect.left) / rect.width) * 100 + '%';
-        star.style.top = ((e.clientY - rect.top) / rect.height) * 100 + '%';
-        // 個別星號刪除邏輯
-        star.onclick = (ev) => { if(isBrushActive) { ev.stopPropagation(); star.remove(); } };
-        e.currentTarget.appendChild(star);
-    }
-    function tellerNext() {
-        if(tIdx < 3) { tIdx++; renderTeller(); }
-        else { if(mediaRecorder && mediaRecorder.state==="recording") stopRec(); showResult(); }
-    }
-    function showResult() {
-        document.getElementById('teller-main').classList.add('hidden');
-        document.getElementById('teller-result').classList.remove('hidden');
-        const list = document.getElementById('summary-list'); list.innerHTML = '';
-        storyImgs.forEach((src, i) => {
-            let icons = grammarConfig[i].map(icon => 
-                `<img src="${icon}" class="res-icon ${grammarStatus[i].includes(icon)?'':'grey'}">`
-            ).join('');
-            list.innerHTML += `
-                <div class="result-row">
-                    <img src="${src}" class="res-img">
-                    <div class="res-grammars">${icons}</div>
-                </div>`;
-        });
-        confetti(); hooraySound.play();
+    const grammarCues = [
+      {
+        picture: 1,
+        cues: [
+          { name: 'When', url: 'https://github.com/HKST-resources/story-sharingtoyintheclassroom/blob/main/when.png?raw=true' },
+          { name: 'Who', url: 'https://github.com/HKST-resources/story-sharingtoyintheclassroom/blob/main/who.png?raw=true' },
+          { name: 'Where', url: 'https://github.com/HKST-resources/story-sharingtoyintheclassroom/blob/main/where.png?raw=true' },
+          { name: 'What', url: 'https://github.com/HKST-resources/story-sharingtoyintheclassroom/blob/main/what.png?raw=true' }
+        ]
+      },
+      {
+        picture: 2,
+        cues: [
+          { name: 'Initiating Event', url: 'https://github.com/HKST-resources/story-sharingtoyintheclassroom/blob/main/initiating-event.png?raw=true' }
+        ]
+      },
+      {
+        picture: 3,
+        cues: [
+          { name: 'Attempt', url: 'https://github.com/HKST-resources/story-sharingtoyintheclassroom/blob/main/attempt.png?raw=true' }
+        ]
+      },
+      {
+        picture: 4,
+        cues: [
+          { name: 'Consequence', url: 'https://github.com/HKST-resources/story-sharingtoyintheclassroom/blob/main/consequence.png?raw=true' },
+          { name: 'Reaction', url: 'https://github.com/HKST-resources/story-sharingtoyintheclassroom/blob/main/reaction.png?raw=true' }
+        ]
+      }
+    ];
+
+    // State management
+    let currentLevel = 1;
+    let sequenceState = {}; // { cardId: position }
+    let errorMarkers = {}; // { position: errorElement } to track error indicators
+    let cardGridPositions = {}; // { cardId: gridPosition } to track original positions
+    let level3State = {
+      currentPicture: 0,
+      stars: [[], [], [], []],
+      selectedCues: [[], [], [], []]
+    };
+
+    // Initialize Level 1
+    function initLevel1() {
+      sequenceState = {}; // { cardId: position } - cards in sequence slots
+      errorMarkers = {};
+      
+      // Shuffle cards and place in grid
+      let shuffledCards = [...storyCards].sort(() => Math.random() - 0.5);
+      cardGridPositions = {}; // { cardId: gridIndex } - track original grid position for each card
+      shuffledCards.forEach((card, index) => {
+        cardGridPositions[card.id] = index;
+      });
+      
+      renderShuffleBox();
     }
 
-    // --- Audio Logic ---
-    let mediaRecorder, chunks = [], audioBlob;
-    async function toggleGlobalRecord() {
-        const btn = document.getElementById('rec-status');
-        if(!mediaRecorder || mediaRecorder.state === "inactive") {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const mimeType = MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : 'audio/webm';
-            mediaRecorder = new MediaRecorder(stream, { mimeType });
-            chunks = [];
-            mediaRecorder.ondataavailable = e => chunks.push(e.data);
-            mediaRecorder.start();
-            btn.innerText = "⏹️ 停止錄音"; btn.classList.add('recording-active');
-        } else { stopRec(); btn.innerText = "✅ 錄音完成"; btn.classList.remove('recording-active'); }
-    }
-    function stopRec() {
-        if(mediaRecorder) {
-            mediaRecorder.stop();
-            mediaRecorder.onstop = () => { audioBlob = new Blob(chunks, { type: mediaRecorder.mimeType }); };
+    function renderShuffleBox() {
+      const shuffleBox = document.getElementById('shuffleBox');
+      shuffleBox.innerHTML = '';
+      
+      // Create 4 grid slots - each card stays in its own slot
+      for (let gridIndex = 0; gridIndex < 4; gridIndex++) {
+        const slotEl = document.createElement('div');
+        slotEl.className = 'shuffle-grid-slot';
+        slotEl.setAttribute('data-grid-index', gridIndex);
+        
+        const cardId = Object.keys(cardGridPositions).find(id => cardGridPositions[id] === gridIndex);
+        
+        if (cardId) {
+          const numId = parseInt(cardId);
+          const card = storyCards.find(c => c.id === numId);
+          
+          // Only show cards that are NOT in sequence
+          if (!sequenceState[numId]) {
+            const cardEl = document.createElement('div');
+            cardEl.className = 'story-card';
+            cardEl.setAttribute('data-card-id', numId);
+            cardEl.setAttribute('data-grid-index', gridIndex);
+            cardEl.innerHTML = `<img src="${card.url}?raw=true" alt="Story card ${numId}" loading="lazy" onerror="console.error('Image failed:', this.src);">`;
+            cardEl.onclick = () => handleCardClick(numId);
+            slotEl.appendChild(cardEl);
+          }
         }
-    }
-    function playGlobalRecord() {
-        if(audioBlob) { (new Audio(URL.createObjectURL(audioBlob))).play(); }
-    }
-    async function exportRecording() {
-        if(!audioBlob || !navigator.share) { alert("此設備不支持直接分享錄音。"); return; }
-        const file = new File([audioBlob], "story.m4a", { type: audioBlob.type });
-        await navigator.share({ files: [file], title: '故事錄音' });
-    }
-    function captureScreen() {
-        html2canvas(document.getElementById('export-area'), { scale: 2, useCORS: true }).then(canvas => {
-            const imgData = canvas.toDataURL("image/png");
-            if(/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                const win = window.open();
-                win.document.write(`<img src="${imgData}" style="width:100%"><p style="text-align:center;">長按上方圖片儲存</p>`);
-            } else {
-                const link = document.createElement('a');
-                link.download = 'story-result.png'; link.href = imgData; link.click();
-            }
-        });
+        
+        shuffleBox.appendChild(slotEl);
+      }
     }
 
-    function showLevel(n) {
-        document.querySelectorAll('.game-container').forEach(c => c.classList.add('hidden'));
-        document.getElementById('level'+n).classList.remove('hidden');
-        document.querySelectorAll('.level-btn').forEach((b,i) => b.classList.toggle('active-level', i===n-1));
-        if(n===1) initLevel1(); if(n===2) { qIdx=0; updateQuiz(); } if(n===3) { tIdx=0; renderTeller(); }
+    function handleCardClick(cardId) {
+      if (sequenceState[cardId]) {
+        // Remove from sequence back to shuffle box
+        const position = sequenceState[cardId];
+        delete sequenceState[cardId];
+        if (errorMarkers[position]) {
+          errorMarkers[position].remove();
+          delete errorMarkers[position];
+        }
+      } else {
+        // Find first empty position (1-4)
+        const filledPositions = new Set(Object.values(sequenceState).map(p => parseInt(p)));
+        for (let pos = 1; pos <= 4; pos++) {
+          if (!filledPositions.has(pos)) {
+            sequenceState[cardId] = pos;
+            break;
+          }
+        }
+      }
+      updateSequenceDisplay();
+      renderShuffleBox();
     }
-    window.onload = () => initLevel1();
-</script>
-</body>
+
+    function updateSequenceDisplay() {
+      const slots = document.querySelectorAll('.sequence-slot');
+      slots.forEach(slot => {
+        const position = parseInt(slot.dataset.position);
+        const existingImg = slot.querySelector('img');
+        const cardId = Object.keys(sequenceState).find(id => parseInt(sequenceState[id]) === position);
+        
+        if (cardId) {
+          const card = storyCards.find(c => c.id === parseInt(cardId));
+          slot.classList.add('filled');
+          
+          if (!existingImg) {
+            const img = document.createElement('img');
+            img.src = card.url + '?raw=true';
+            img.alt = 'Card';
+            img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; cursor: pointer;';
+            img.onclick = (e) => { e.stopPropagation(); handleCardClick(parseInt(cardId)); };
+            slot.appendChild(img);
+          }
+        } else {
+          slot.classList.remove('filled');
+          if (existingImg) existingImg.remove();
+        }
+      });
+    }
+
+    function checkSequence() {
+      const correct = Object.keys(sequenceState).every(cardId => parseInt(sequenceState[cardId]) === parseInt(cardId));
+      
+      if (correct && Object.keys(sequenceState).length === 4) {
+        triggerCelebration();
+        setTimeout(() => {
+          alert('🎉 正確！');
+        }, 2000);
+      } else {
+        const slots = document.querySelectorAll('.sequence-slot');
+        slots.forEach(slot => {
+          const position = slot.dataset.position;
+          const cardId = Object.keys(sequenceState).find(id => sequenceState[id] == position);
+          
+          if (cardId && parseInt(cardId) != parseInt(position)) {
+            if (!errorMarkers[position]) {
+              const errorEl = document.createElement('div');
+              errorEl.className = 'error-indicator show';
+              errorEl.textContent = '❓';
+              slot.appendChild(errorEl);
+              errorMarkers[position] = errorEl;
+            }
+          } else if (errorMarkers[position]) {
+            errorMarkers[position].remove();
+            delete errorMarkers[position];
+          }
+        });
+      }
+    }
+
+    function resetLevel1() {
+      sequenceState = {};
+      errorMarkers = {};
+      initLevel1();
+    }
+
+    // Level 2 State
+    let level2State = {
+      currentQuestionIndex: 0,
+      answeredCount: 0,
+      expandedHint: null
+    };
+
+    // Level 2 Initialization
+    function initLevel2() {
+      level2State = {
+        currentQuestionIndex: 0,
+        answeredCount: 0,
+        expandedHint: null
+      };
+      showLevel2Question();
+    }
+
+    function showLevel2Question() {
+      const container = document.getElementById('questionsContainer');
+      container.innerHTML = '';
+
+      const q = questions[level2State.currentQuestionIndex];
+      const isLastQuestion = level2State.currentQuestionIndex === questions.length - 1;
+
+      // Progress bar - show progress based on current question (first segment starts, ends at full when at last question)
+      const progressPercentage = ((level2State.currentQuestionIndex + 1) / questions.length) * 100;
+      const progressHtml = `
+        <div style="margin-bottom: 2rem;">
+          <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+            <div style="flex: 1; background: #eee; height: 8px; border-radius: 10px; overflow: hidden;">
+              <div style="background: linear-gradient(135deg, #9CD867 0%, #A8E078 100%); height: 100%; width: ${progressPercentage}%; transition: width 0.3s ease;"></div>
+            </div>
+            <span style="font-weight: bold; color: #333; min-width: 80px;">⭐ ${level2State.currentQuestionIndex + 1}/${questions.length}</span>
+          </div>
+        </div>
+      `;
+
+      // Question card
+      const questionCard = `
+        <div class="question-card">
+          <div class="question-header">
+            <button class="audio-btn" onclick="playQuestionAudio(${q.id})" title="播放">
+              🔊
+            </button>
+            <div style="flex: 1;">
+              <p style="font-size: 1.1rem; color: #333; margin: 0; font-weight: bold;">${level2State.currentQuestionIndex + 1}. ${q.text}</p>
+            </div>
+          </div>
+          <div id="hintsContainer" style="margin-top: 1.5rem;">
+            <!-- Hints will be inserted here -->
+          </div>
+        </div>
+      `;
+
+      // Navigation buttons - always just continue since 完成 is handled in checkComprehension
+      const navButtons = `
+        <div class="btn-group" style="margin-top: 2rem;">
+          <button class="btn btn-primary" onclick="nextLevel2Question()">${isLastQuestion ? '完成✅' : '繼續 →'}</button>
+        </div>
+      `;
+
+      container.innerHTML = progressHtml + questionCard + navButtons;
+
+      // Render hints
+      renderHints(q);
+    }
+
+    function renderHints(question) {
+      const hintsContainer = document.getElementById('hintsContainer');
+      hintsContainer.innerHTML = '';
+
+      const hints = [
+        {
+          type: 'least',
+          icon: '📖',
+          title: '較少提示',
+          description: '再看一次完整故事',
+          color: '#72D6FF',
+          bgColor: '#E0F7FF'
+        },
+        {
+          type: 'middle',
+          icon: '🔍',
+          title: '中等提示',
+          description: '最相關的一張圖卡',
+          color: '#FFD93B',
+          bgColor: '#FFF9E6'
+        },
+        {
+          type: 'most',
+          icon: '⭕',
+          title: '最多提示',
+          description: '圈出答案位置',
+          color: '#FFB8A8',
+          bgColor: '#FFE8E0'
+        }
+      ];
+
+      hints.forEach(hint => {
+        const isExpanded = level2State.expandedHint === hint.type;
+        let hintContent = '';
+
+        if (isExpanded) {
+          if (hint.type === 'least') {
+            hintContent = `
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                ${storyCards.map((card, idx) => `
+                  <div>
+                    <p style="font-weight: bold; color: #667eea; margin-bottom: 0.5rem; text-align: center; font-size: 0.9rem;">圖卡 ${idx + 1}</p>
+                    <img src="${card.url}?raw=true" alt="Story card" style="width: 100%; height: auto; border-radius: 10px; display: block;" loading="lazy" onerror="console.error('Image failed:', this.src);">
+                  </div>
+                `).join('')}
+              </div>
+            `;
+          } else if (hint.type === 'middle') {
+            const pic = storyCards[question.middle - 1];
+            hintContent = `
+              <img src="${pic.url}?raw=true" alt="Relevant picture" style="max-width: 100%; max-height: 350px; height: auto; object-fit: contain; border-radius: 15px; display: block; margin: 0 auto;" loading="lazy" onerror="console.error('Image failed:', this.src);">
+            `;
+          } else if (hint.type === 'most') {
+            hintContent = `
+              <img src="${question.most}?raw=true" alt="Hint with circle" style="max-width: 100%; max-height: 350px; height: auto; object-fit: contain; border-radius: 15px; display: block; margin: 0 auto;" loading="lazy" onerror="console.error('Image failed:', this.src);">
+            `;
+          }
+        }
+
+        const hintHtml = `
+          <div style="margin-bottom: 1.2rem;">
+            <button class="hint-btn" onclick="toggleLevel2Hint('${hint.type}')" style="background: linear-gradient(135deg, ${hint.color}20 0%, ${hint.color}10 100%); border: 2px solid ${hint.color}; color: ${hint.color}; width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem; padding: 0.8rem 1.2rem; font-weight: bold; justify-content: flex-start;">
+              <div style="display: flex; align-items: center; gap: 0.6rem;">
+                <span style="font-size: 1.2rem;">${hint.icon}</span>
+                <span>${hint.title}</span>
+              </div>
+              <span style="font-size: 0.8rem; font-weight: normal; color: ${hint.color}; opacity: 0.8;">${hint.description}</span>
+            </button>
+            ${isExpanded ? `<div style="background: ${hint.bgColor}; border-radius: 15px; padding: 1.2rem; margin-top: 1rem;">${hintContent}</div>` : ''}
+          </div>
+        `;
+
+        hintsContainer.innerHTML += hintHtml;
+      });
+    }
+
+    function toggleLevel2Hint(hintType) {
+      if (level2State.expandedHint === hintType) {
+        level2State.expandedHint = null;
+      } else {
+        level2State.expandedHint = hintType;
+      }
+      const q = questions[level2State.currentQuestionIndex];
+      renderHints(q);
+    }
+
+    function playQuestionAudio(questionId) {
+      const question = questions.find(q => q.id === questionId);
+      if (!question) return;
+
+      // Cancel any ongoing speech
+      if ('speechSynthesis' in window) {
+        speechSynthesis.cancel();
+        
+        // Create utterance for Cantonese using the question text directly
+        const utterance = new SpeechSynthesisUtterance(question.text);
+        utterance.lang = 'yue';  // Cantonese language code
+        utterance.rate = 1;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+        
+        // Set onstart to confirm playback begins
+        utterance.onstart = function() {
+          console.log('Audio playback started for:', question.text);
+        };
+        
+        utterance.onerror = function(event) {
+          console.error('Speech synthesis error:', event.error);
+        };
+        
+        // Attempt to speak
+        try {
+          speechSynthesis.speak(utterance);
+        } catch (e) {
+          console.error('Speech synthesis error:', e);
+        }
+      } else {
+        console.error('Speech Synthesis API not supported');
+      }
+    }
+
+    function nextLevel2Question() {
+      level2State.answeredCount++;
+      const isLastQuestion = level2State.currentQuestionIndex === questions.length - 1;
+
+      if (isLastQuestion) {
+        triggerCelebration();
+        setTimeout(() => {
+          showLevel2Results();
+        }, 500);
+      } else {
+        level2State.currentQuestionIndex++;
+        level2State.expandedHint = null;
+        showLevel2Question();
+      }
+    }
+
+    function showLevel2Results() {
+      const resultsContainer = document.getElementById('questionsContainer');
+      resultsContainer.innerHTML = `
+        <div style="text-align: center; padding: 2rem;">
+          <h2 style="font-size: 2.5rem; color: #667eea; margin-bottom: 1rem;">🎉 完成！</h2>
+          <p style="font-size: 1.2rem; color: #333; margin-bottom: 2rem;">你已經回答了所有 ${questions.length} 個問題！</p>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="switchLevel(3)">下一關 →</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // Level 3 Initialization
+    function initLevel3() {
+      level3State = {
+        currentPicture: 0,
+        stars: [[], [], [], []],
+        selectedCues: [[], [], [], []]
+      };
+      showCurrentStoryPicture();
+    }
+
+    function showCurrentStoryPicture() {
+      const picture = level3State.currentPicture;
+      const storyCard = storyCards[picture];
+      const img = document.getElementById('storyPicture');
+      
+      // Only update image if it's different to prevent flicker
+      if (img.src !== storyCard.url + '?raw=true') {
+        img.src = storyCard.url + '?raw=true';
+      }
+
+      // Clear all existing star markers from the wrapper
+      const wrapper = document.getElementById('storyPictureWrapper');
+      const existingStars = wrapper.querySelectorAll('.star-marker');
+      existingStars.forEach(star => star.remove());
+
+      // Redraw stars for the current picture
+      level3State.stars[picture].forEach((star, idx) => {
+        addStarToDOM(picture, idx, star);
+      });
+
+      // Update grammar cues
+      const cueContainer = document.getElementById('grammarCuesContainer');
+      const cues = grammarCues[picture].cues;
+
+      // Clear and rebuild cues
+      cueContainer.innerHTML = '';
+      cues.forEach((cue, idx) => {
+        const cueEl = document.createElement('div');
+        cueEl.className = 'grammar-cue';
+        const isSelected = level3State.selectedCues[picture].includes(idx);
+        if (isSelected) {
+          cueEl.classList.add('selected');
+        }
+        cueEl.setAttribute('data-cue-idx', idx);
+        cueEl.innerHTML = `
+          <img src="${cue.url}?raw=true" alt="${cue.name}" loading="lazy" onerror="console.error('Image failed:', this.src);">
+          <div class="tick-mark" style="display: ${isSelected ? 'flex' : 'none'};">✓</div>
+        `;
+        cueEl.onclick = () => toggleCue(idx);
+        cueContainer.appendChild(cueEl);
+      });
+
+      // Update button states
+      const nextBtn = document.querySelector('button[onclick="nextStoryPicture()"]');
+      const prevBtn = document.querySelector('button[onclick="previousStoryPicture()"]');
+      prevBtn.disabled = picture === 0;
+      
+      const isLastPicture = picture === 3;
+      nextBtn.textContent = isLastPicture ? '完成✅' : '下一張 →';
+      nextBtn.disabled = false;
+    }
+
+    function toggleCue(idx) {
+      const picture = level3State.currentPicture;
+      if (level3State.selectedCues[picture].includes(idx)) {
+        level3State.selectedCues[picture] = level3State.selectedCues[picture].filter(i => i !== idx);
+      } else {
+        level3State.selectedCues[picture].push(idx);
+      }
+      
+      // Update only the specific cue card without rebuilding everything
+      const cueElement = document.querySelector(`[data-cue-idx="${idx}"]`);
+      if (cueElement) {
+        const isSelected = level3State.selectedCues[picture].includes(idx);
+        if (isSelected) {
+          cueElement.classList.add('selected');
+          cueElement.querySelector('.tick-mark').style.display = 'flex';
+        } else {
+          cueElement.classList.remove('selected');
+          cueElement.querySelector('.tick-mark').style.display = 'none';
+        }
+      }
+    }
+
+    document.addEventListener('click', function(e) {
+      if (e.target.id === 'storyPicture') {
+        const wrapper = document.getElementById('storyPictureWrapper');
+        const wrapperRect = wrapper.getBoundingClientRect();
+        
+        // Calculate position relative to wrapper
+        let x = e.clientX - wrapperRect.left;
+        let y = e.clientY - wrapperRect.top;
+
+        // Adjust for star size (star is 3rem = ~48px, centered offset by ~24px up and left)
+        x = Math.max(0, x - 24);
+        y = Math.max(0, y - 24);
+
+        const picture = level3State.currentPicture;
+        level3State.stars[picture].push({ x, y });
+        addStarToDOM(picture, level3State.stars[picture].length - 1, { x, y });
+      }
+    });
+
+    function addStarToDOM(picture, starIndex, star) {
+      const wrapper = document.getElementById('storyPictureWrapper');
+      const starEl = document.createElement('div');
+      starEl.className = 'star-marker';
+      starEl.textContent = '⭐';
+      starEl.style.left = star.x + 'px';
+      starEl.style.top = star.y + 'px';
+      starEl.setAttribute('data-star-index', starIndex);
+      starEl.ondblclick = (e) => {
+        e.stopPropagation();
+        removeStarAtIndex(picture, starIndex);
+      };
+      wrapper.appendChild(starEl);
+    }
+
+    function removeStarAtIndex(picture, index) {
+      level3State.stars[picture].splice(index, 1);
+      // Just remove the star from DOM, don't rebuild everything
+      const wrapper = document.getElementById('storyPictureWrapper');
+      const stars = wrapper.querySelectorAll('.star-marker');
+      if (index < stars.length) {
+        stars[index].remove();
+      }
+    }
+
+    function nextStoryPicture() {
+      if (level3State.currentPicture < 3) {
+        level3State.currentPicture++;
+        showCurrentStoryPicture();
+      } else {
+        // Last picture - show results page
+        triggerCelebration();
+        setTimeout(() => {
+          showResults();
+          switchLevel(4);
+        }, 500);
+      }
+    }
+
+    function previousStoryPicture() {
+      if (level3State.currentPicture > 0) {
+        level3State.currentPicture--;
+        showCurrentStoryPicture();
+      }
+    }
+
+    function showResults() {
+      const resultsContainer = document.getElementById('resultsContainer');
+      let resultsHtml = '<div class="results-summary">';
+      
+      // Add story example with key points highlighted
+      resultsHtml += `
+        <div class="story-example">
+          <div class="story-example-title">📖 故事範例（紅色字是重要內容，需清晰交代以說出完整的故事架構）：</div>
+          <span class="story-key">星期一</span>，<span class="story-key">弟弟</span>喺<span class="story-key">課室</span>度<span class="story-key">砌積木</span>。突然有個<span class="story-key">妹妹</span>行過嚟，佢都想<span class="story-key">一齊玩</span>積木。弟弟就同佢<span class="story-key">一齊分享</span>。最後，<span class="story-key">老師</span><span class="story-key">讚</span>弟弟同妹妹有一齊分享玩具，係好孩子。
+        </div>
+      `;
+      
+      resultsHtml += '<table style="width: 100%; border-collapse: collapse;">';
+
+      storyCards.forEach((card, idx) => {
+        const cues = grammarCues[idx].cues;
+        resultsHtml += `
+          <tr style="border-bottom: 2px solid #eee;">
+            <td style="padding: 1.5rem; vertical-align: top; width: 40%;">
+              <img src="${card.url}?raw=true" alt="Story picture" style="width: 100%; height: auto; border-radius: 15px; display: block;" loading="lazy" onerror="console.error('Image failed:', this.src);">
+              <p style="font-weight: bold; color: #667eea; margin: 1rem 0 0 0; text-align: center; font-size: 0.9rem;">圖卡 ${idx + 1}</p>
+            </td>
+            <td style="padding: 1.5rem; vertical-align: top;">
+              <div>
+                <div style="display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: flex-start; margin-bottom: 1.5rem;">
+        `;
+
+        cues.forEach((cue, cueIdx) => {
+          const isTicked = level3State.selectedCues[idx].includes(cueIdx);
+          resultsHtml += `
+            <div style="width: 110px; height: 110px; border-radius: 12px; overflow: hidden; flex-shrink: 0; ${isTicked ? 'opacity: 1; filter: grayscale(0%); border: 3px solid #9CD867; box-shadow: 0 4px 12px rgba(156, 216, 103, 0.3);' : 'opacity: 0.4; filter: grayscale(100%); border: 3px solid #ccc;'}">
+              <img src="${cue.url}?raw=true" alt="${cue.name}" style="width: 100%; height: 100%; object-fit: contain; padding: 0.4rem;" loading="lazy" onerror="console.error('Image failed:', this.src);">
+            </div>
+          `;
+        });
+
+        resultsHtml += `
+                </div>
+                <label class="remarks-label">📝 備註：</label>
+                <textarea class="remarks-input" id="remarks-${idx}" placeholder="記下孩子在這張圖說故事時的重點或需要改進的地方..."></textarea>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+
+      resultsHtml += '</table></div>';
+      resultsContainer.innerHTML = resultsHtml;
+    }
+
+    function closeResults() {
+      document.getElementById('resultsModal').classList.add('hidden');
+    }
+
+    function exportResults() {
+      // Export results as single-page PDF
+      const exportBtn = event.target;
+      const originalText = exportBtn.textContent;
+      exportBtn.textContent = '處理中...';
+      exportBtn.disabled = true;
+
+      // Load html2pdf library
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+      
+      script.onload = function() {
+        createSinglePagePDF();
+      };
+      
+      document.head.appendChild(script);
+
+      function createSinglePagePDF() {
+        try {
+          // Create a container for PDF content
+          const pdfContent = document.createElement('div');
+          pdfContent.style.cssText = 'width: 210mm; height: 297mm; padding: 10mm; font-family: Arial, sans-serif; background: white; font-size: 11px; line-height: 1.4; color: #333;';
+
+          // Title
+          let html = '<div style="text-align: center; margin-bottom: 8px;"><h1 style="color: #667eea; font-size: 18px; margin: 0;">故事學習結果總結</h1></div>';
+
+          // Story Example Section
+          html += '<div style="background: #f9f9f9; padding: 8px; border-radius: 5px; margin-bottom: 8px;"><strong style="color: #667eea; font-size: 10px;">📖 故事範例（紅色字是重要內容）：</strong><p style="margin: 5px 0; font-size: 10px; line-height: 1.6;">星期一，<span style="color: #ef4444; font-weight: bold;">弟弟</span>喺<span style="color: #ef4444; font-weight: bold;">課室</span>度<span style="color: #ef4444; font-weight: bold;">砌積木</span>。突然有個<span style="color: #ef4444; font-weight: bold;">妹妹</span>行過嚟，佢都想<span style="color: #ef4444; font-weight: bold;">一齊玩</span>積木。弟弟就同佢<span style="color: #ef4444; font-weight: bold;">一齊分享</span>。最後，<span style="color: #ef4444; font-weight: bold;">老師</span><span style="color: #ef4444; font-weight: bold;">讚</span>弟弟同妹妹有一齊分享玩具，係好孩子。</p></div>';
+
+          // Results Grid (4 cards in 2x2 layout)
+          html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">';
+
+          for (let idx = 0; idx < 4; idx++) {
+            const cues = grammarCues[idx].cues;
+            const selectedCuesText = cues
+              .map((cue, cueIdx) => level3State.selectedCues[idx].includes(cueIdx) ? cue.name : null)
+              .filter(Boolean)
+              .join(', ') || '(未選擇)';
+
+            const textarea = document.getElementById(`remarks-${idx}`);
+            const remarks = textarea ? textarea.value.substring(0, 80) : '(無備註)'; // Limit remarks
+
+            html += `<div style="border: 1px solid #ddd; padding: 8px; border-radius: 5px; background: #fafafa;">
+              <strong style="color: #667eea; font-size: 10px;">圖卡 ${idx + 1}</strong>
+              <p style="margin: 4px 0; font-size: 9px;"><strong>✓ 文法：</strong> ${selectedCuesText}</p>
+              <p style="margin: 4px 0; font-size: 9px;"><strong>📝 備註：</strong> ${remarks}</p>
+            </div>`;
+          }
+
+          html += '</div>';
+
+          // Timestamp at bottom
+          html += `<div style="text-align: right; font-size: 8px; color: #999; margin-top: 8px;">導出時間：${new Date().toLocaleString('zh-HK')}</div>`;
+
+          pdfContent.innerHTML = html;
+
+          // Use html2pdf to convert to PDF
+          const opt = {
+            margin: 0,
+            filename: `故事學習結果_${new Date().toISOString().split('T')[0]}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { format: 'a4', orientation: 'portrait' }
+          };
+
+          html2pdf().set(opt).from(pdfContent).save().then(() => {
+            exportBtn.textContent = originalText;
+            exportBtn.disabled = false;
+          }).catch(err => {
+            console.error('PDF export failed:', err);
+            alert('PDF 導出失敗，請重試');
+            exportBtn.textContent = originalText;
+            exportBtn.disabled = false;
+          });
+        } catch (err) {
+          console.error('PDF export failed:', err);
+          alert('PDF 導出失敗，請重試');
+          exportBtn.textContent = originalText;
+          exportBtn.disabled = false;
+        }
+      }
+    }
+
+    // Navigation
+    function switchLevel(level) {
+      currentLevel = level;
+      document.querySelectorAll('.level-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.level-btn').forEach(btn => btn.classList.remove('active'));
+
+      document.getElementById(`level${level}`).classList.remove('hidden');
+      document.querySelectorAll('.level-btn')[level - 1].classList.add('active');
+
+      if (level === 1) initLevel1();
+      if (level === 2) initLevel2();
+      if (level === 3) initLevel3();
+      if (level === 4) {
+        // Results page already shown, just navigate
+      }
+    }
+
+    // Celebration with confetti rain
+    function triggerCelebration() {
+      // Create 100 star confetti pieces falling from the top
+      for (let i = 0; i < 100; i++) {
+        setTimeout(() => {
+          const confetti = document.createElement('div');
+          confetti.className = 'confetti-piece confetti-falling';
+          confetti.textContent = '⭐';
+          
+          // Random horizontal position
+          const randomX = Math.random() * 100;
+          confetti.style.left = randomX + '%';
+          confetti.style.top = '-50px';
+          
+          // Random animation duration for variety
+          const duration = 2.5 + Math.random() * 1;
+          confetti.style.animationDuration = duration + 's';
+          
+          // Random rotation direction
+          const rotationDirection = Math.random() > 0.5 ? 1 : -1;
+          confetti.style.setProperty('--rotation-direction', rotationDirection);
+          
+          document.body.appendChild(confetti);
+          
+          setTimeout(() => confetti.remove(), duration * 1000);
+        }, i * 30);
+      }
+    }
+
+    // Initialize
+    initLevel1();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e37c45d26b0e6d6',t:'MTc3NDcxMjc4MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
